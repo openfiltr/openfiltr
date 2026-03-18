@@ -29,12 +29,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc libsqlite3-dev
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: go
       - name: Build for CodeQL
         run: CGO_ENABLED=1 go build ./cmd/server
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
 
   dependency-review:
     name: Dependency Review
