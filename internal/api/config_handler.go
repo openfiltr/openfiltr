@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -8,7 +9,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const configExportVersion = 1
+
 type exportPayload struct {
+	Version         int                      `yaml:"version"`
 	BlockRules      []map[string]interface{} `yaml:"block_rules"`
 	AllowRules      []map[string]interface{} `yaml:"allow_rules"`
 	RuleSources     []map[string]interface{} `yaml:"rule_sources"`
@@ -18,6 +22,7 @@ type exportPayload struct {
 
 func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {
 	payload := exportPayload{
+		Version:         configExportVersion,
 		BlockRules:      h.fetchRows("SELECT id,pattern,rule_type,comment,enabled FROM block_rules"),
 		AllowRules:      h.fetchRows("SELECT id,pattern,rule_type,comment,enabled FROM allow_rules"),
 		RuleSources:     h.fetchRows("SELECT id,name,url,format,enabled FROM rule_sources"),
@@ -65,6 +70,10 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 	var payload exportPayload
 	if err := yaml.NewDecoder(r.Body).Decode(&payload); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid YAML: "+err.Error())
+		return
+	}
+	if err := validateConfigVersion(payload.Version); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -171,6 +180,13 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respond(w, http.StatusOK, map[string]interface{}{"imported": imported})
+}
+
+func validateConfigVersion(version int) error {
+	if version != configExportVersion {
+		return fmt.Errorf("unsupported config version %d: expected version %d", version, configExportVersion)
+	}
+	return nil
 }
 
 func newID() string {

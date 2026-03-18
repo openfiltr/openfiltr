@@ -1428,7 +1428,7 @@ paths:
     get:
       tags: [config]
       summary: Export configuration
-      description: Exports the full configuration as a YAML file. Sensitive fields (JWT secret, password hashes) are excluded.
+      description: "Exports the full configuration as a YAML file with `version: 1` at the top. Sensitive fields (JWT secret, password hashes) are excluded."
       operationId: exportConfig
       responses:
         "200":
@@ -1442,7 +1442,7 @@ paths:
     post:
       tags: [config]
       summary: Import configuration
-      description: Imports a YAML or JSON configuration. Use `?dry_run=true` to validate without writing.
+      description: "Imports a YAML or JSON configuration and requires a supported top-level `version` field. Use `?dry_run=true` to validate without writing."
       operationId: importConfig
       parameters:
         - name: dry_run
