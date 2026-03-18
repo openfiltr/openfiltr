@@ -1,0 +1,43 @@
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+dist/
+vendor/
+*.test
+*.out
+coverage.out
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# Runtime data & config
+data/
+config/*.yaml
+!config/app.yaml.example
+
+# Web
+web/node_modules/
+web/dist/
+
+# Secrets
+*.env
+.env
+secrets.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Binary
+openfiltr
+openfiltr-*

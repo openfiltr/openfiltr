@@ -1,0 +1,13 @@
+services:
+  openfiltr:
+    image: ghcr.io/openfiltr/openfiltr:latest
+    container_name: openfiltr
+    ports:
+      - "53:5353/udp"
+      - "53:5353/tcp"
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      - OPENFILTR_DB_PATH=/data/openfiltr.db
+    restart: unless-stopped
