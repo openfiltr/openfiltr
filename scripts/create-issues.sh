@@ -172,11 +172,14 @@ while IFS= read -r issue_json; do
     gh_args+=(--milestone "${milestone_name}")
   fi
 
-  if gh issue create "${gh_args[@]}" --silent 2>/dev/null; then
+  if gh issue create "${gh_args[@]}" >/dev/null 2>&1; then
     success "Created issue: ${title}"
     ((created++)) || true
   else
     error "Failed to create issue: ${title}"
+    printf '  title=%q\n' "$title" >&2
+    printf '  milestone=%q\n' "$milestone_name" >&2
+    printf '  labels=%q\n' "$labels_array" >&2
     ((failed++)) || true
   fi
 
