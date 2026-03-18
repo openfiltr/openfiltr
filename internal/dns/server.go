@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -126,7 +127,9 @@ func (s *Server) forward(req, resp *mdns.Msg) error {
 }
 
 func (s *Server) log(clientIP, domain, qtype, action string, ms int) {
-	id := fmt.Sprintf("%d", time.Now().UnixNano())
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	id := fmt.Sprintf("%x", b)
 	_, _ = s.db.Exec(`INSERT INTO activity_log(id,client_ip,domain,query_type,action,response_time_ms) VALUES(?,?,?,?,?,?)`,
 		id, clientIP, domain, qtype, action, ms)
 }
