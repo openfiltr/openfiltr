@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="https://raw.githubusercontent.com/openfiltr/.github/main/assets/logo.svg" alt="OpenFiltr logo" width="120" />
+
 # OpenFiltr
 
 **An open, community-governed DNS filtering backend with API-first design, portable YAML configuration, and self-hosted deployment.**
