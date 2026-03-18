@@ -147,6 +147,17 @@ Export your configuration at any time:
 curl -H "Authorization: Bearer <token>" http://localhost:3000/api/v1/config/export > config-backup.yaml
 ```
 
+Exported backups start with a schema version header so imports can reject incompatible files clearly:
+
+```yaml
+version: 1
+block_rules: []
+allow_rules: []
+rule_sources: []
+dns_entries: []
+upstream_servers: []
+```
+
 ## Repo layout
 
 ```
