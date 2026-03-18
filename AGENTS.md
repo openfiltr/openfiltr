@@ -36,6 +36,37 @@
 - `.worktrees/` is intentionally ignored in `.gitignore`.
 - Use a worktree when starting non-trivial feature work off `origin/main` so you do not contaminate another branch.
 
+## Branching Strategy
+
+- Start non-trivial work from the latest `origin/main`, not from an old feature branch.
+- Create one scoped branch per concern under the `codex/` prefix.
+- Open PRs into `main`; do not stack unrelated work onto an already-open feature PR.
+- If a PR branch drifts, merge or rebase the latest `main` into that branch before adding more work.
+- Keep temporary rescue branches exceptional. If branch rules block direct updates, use a replacement branch only long enough to unblock the original PR or replace it cleanly.
+
+## Merge Gates
+
+- `main` is protected by a repository ruleset. Assume direct pushes to `main` are forbidden.
+- Changes to `main` must go through a PR and use squash merge.
+- PR threads must be resolved before merge.
+- The required checks on `main` are:
+  - `Quality Checks`
+  - `Test Backend`
+  - `Build Backend (linux, amd64)`
+  - `Build Backend (linux, arm64)`
+  - `Docker Build`
+  - `Dependency Review`
+  - `CodeQL / actions`
+  - `CodeQL / go`
+- The ruleset also enforces strict status checks, linear history, no force-pushes, and no branch deletion on `main`.
+
+## Code Scanning Notes
+
+- `.github/workflows/codeql.yml` is the repo-owned CodeQL source of truth.
+- Keep CodeQL check names stable and unique. The required names are `CodeQL / actions` and `CodeQL / go`.
+- Do not add ambiguous required checks such as `Analyze (go)`; GitHub can emit duplicate names from platform-managed workflows.
+- If GitHub shows an extra neutral `CodeQL` check or a stray `Analyze (go)` run, treat that as platform noise unless it becomes a blocking required check.
+
 ## Verification
 
 - If `go` is unavailable locally, use Docker for Go tooling:
