@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/openfiltr/openfiltr/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -81,7 +82,7 @@ func GenerateAPIToken() (raw, hash string, err error) {
 }
 
 func (s *Service) ValidateAPIToken(token string) (*Claims, error) {
-	rows, err := s.db.Query(`SELECT at.token_hash,u.id,u.username,u.role FROM api_tokens at JOIN users u ON u.id=at.user_id WHERE (at.expires_at IS NULL OR at.expires_at>datetime('now'))`)
+	rows, err := s.db.Query(`SELECT at.token_hash,u.id,u.username,u.role FROM api_tokens at JOIN users u ON u.id=at.user_id WHERE (at.expires_at IS NULL OR at.expires_at>NOW())`)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +93,7 @@ func (s *Service) ValidateAPIToken(token string) (*Claims, error) {
 			continue
 		}
 		if bcrypt.CompareHashAndPassword([]byte(h), []byte(token)) == nil {
-			_, _ = s.db.Exec("UPDATE api_tokens SET last_used_at=datetime('now') WHERE token_hash=?", h)
+			_, _ = s.db.Exec(storage.Rebind("UPDATE api_tokens SET last_used_at=NOW() WHERE token_hash=?"), h)
 			return &Claims{UserID: uid, Username: uname, Role: role}, nil
 		}
 	}
@@ -111,7 +112,7 @@ func EnsureAdminUser(db *sql.DB, username, password string) error {
 	if err != nil {
 		return err
 	}
-	_, err = db.Exec(`INSERT INTO users(id,username,email,password_hash,role) VALUES(?,?,?,?,'admin')`,
+	_, err = db.Exec(storage.Rebind(`INSERT INTO users(id,username,email,password_hash,role) VALUES(?,?,?,?,'admin')`),
 		uuid.New().String(), username, username+"@localhost", hash)
 	return err
 }

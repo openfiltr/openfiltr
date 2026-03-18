@@ -18,18 +18,14 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.24"
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc libsqlite3-dev gcc-aarch64-linux-gnu
       - name: Build binaries
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
           mkdir -p dist
-          CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=amd64 go build \
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
             -ldflags="-s -w -X main.version=$VERSION" \
             -o "dist/openfiltr-linux-amd64" ./cmd/server
-          CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc GOOS=linux GOARCH=arm64 go build \
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
             -ldflags="-s -w -X main.version=$VERSION" \
             -o "dist/openfiltr-linux-arm64" ./cmd/server
           GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build \

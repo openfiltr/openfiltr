@@ -12,8 +12,7 @@ git commit -s -m "feat(dns): add wildcard rule support"
 
 ## Prerequisites
 
-- Go 1.23+
-- Node.js 20+
+- Go 1.24+
 - Docker (optional, for integration tests)
 - `make`
 
@@ -24,7 +23,6 @@ git clone https://github.com/openfiltr/openfiltr
 cd openfiltr
 go mod download
 make build        # compile the server
-make web          # build the React UI
 make test         # run all tests
 ```
 

@@ -11,6 +11,7 @@ import (
 
 	mdns "github.com/miekg/dns"
 	"github.com/openfiltr/openfiltr/internal/config"
+	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
 type Server struct {
@@ -74,13 +75,13 @@ func (s *Server) handle(w mdns.ResponseWriter, r *mdns.Msg) {
 
 func (s *Server) isBlocked(domain string) bool {
 	var n int
-	_ = s.db.QueryRow(`SELECT COUNT(*) FROM block_rules WHERE enabled=1 AND (pattern=? OR pattern='*.'||? OR (rule_type='wildcard' AND ? LIKE REPLACE(pattern,'*','%')))`, domain, domain, domain).Scan(&n)
+	_ = s.db.QueryRow(storage.Rebind(`SELECT COUNT(*) FROM block_rules WHERE enabled=1 AND (pattern=? OR pattern='*.'||? OR (rule_type='wildcard' AND ? LIKE REPLACE(pattern,'*','%')))`), domain, domain, domain).Scan(&n)
 	return n > 0
 }
 
 func (s *Server) localEntries(domain string, qtype uint16) []mdns.RR {
 	typeName := mdns.TypeToString[qtype]
-	rows, err := s.db.Query(`SELECT entry_type,value,ttl FROM dns_entries WHERE host=? AND enabled=1 AND entry_type=?`, domain, typeName)
+	rows, err := s.db.Query(storage.Rebind(`SELECT entry_type,value,ttl FROM dns_entries WHERE host=? AND enabled=1 AND entry_type=?`), domain, typeName)
 	if err != nil {
 		return nil
 	}
@@ -130,6 +131,6 @@ func (s *Server) log(clientIP, domain, qtype, action string, ms int) {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 	id := fmt.Sprintf("%x", b)
-	_, _ = s.db.Exec(`INSERT INTO activity_log(id,client_ip,domain,query_type,action,response_time_ms) VALUES(?,?,?,?,?,?)`,
+	_, _ = s.db.Exec(storage.Rebind(`INSERT INTO activity_log(id,client_ip,domain,query_type,action,response_time_ms) VALUES(?,?,?,?,?,?)`),
 		id, clientIP, domain, qtype, action, ms)
 }

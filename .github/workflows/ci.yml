@@ -19,12 +19,10 @@ jobs:
         with:
           go-version: "1.24"
           cache: true
-      - name: Install build dependencies
-        run: sudo apt-get install -y gcc libsqlite3-dev
       - name: Download modules
         run: go mod download
       - name: Run tests
-        run: CGO_ENABLED=1 go test -race -coverprofile=coverage.out ./...
+        run: go test -race -coverprofile=coverage.out ./...
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
@@ -40,25 +38,16 @@ jobs:
         include:
           - goos: linux
             goarch: amd64
-            cc: gcc
           - goos: linux
             goarch: arm64
-            cc: aarch64-linux-gnu-gcc
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: "1.24"
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc libsqlite3-dev
-          if [ "${{ matrix.goarch }}" = "arm64" ]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu
-          fi
       - name: Build
         run: |
-          CC=${{ matrix.cc }} GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=1 \
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
             go build -ldflags="-s -w" \
             -o dist/openfiltr-${{ matrix.goos }}-${{ matrix.goarch }} \
             ./cmd/server

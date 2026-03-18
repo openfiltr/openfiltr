@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
 // ---- Clients ----
@@ -25,7 +26,7 @@ func (h *Handler) ListClients(w http.ResponseWriter, r *http.Request) {
 	offset := queryInt(r, "offset", 0)
 	var total int
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM clients").Scan(&total)
-	rows, err := h.db.Query("SELECT id,name,identifier,identifier_type,group_id,comment,created_at,updated_at FROM clients ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
+	rows, err := h.db.Query(storage.Rebind("SELECT id,name,identifier,identifier_type,group_id,comment,created_at::text,updated_at::text FROM clients ORDER BY created_at DESC LIMIT ? OFFSET ?"), limit, offset)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
@@ -62,13 +63,13 @@ func (h *Handler) CreateClient(w http.ResponseWriter, r *http.Request) {
 		req.IdentifierType = "ip"
 	}
 	id := uuid.New().String()
-	if _, err := h.db.Exec("INSERT INTO clients(id,name,identifier,identifier_type,group_id,comment) VALUES(?,?,?,?,?,?)",
+	if _, err := h.db.Exec(storage.Rebind("INSERT INTO clients(id,name,identifier,identifier_type,group_id,comment) VALUES(?,?,?,?,?,?)"),
 		id, req.Name, req.Identifier, req.IdentifierType, req.GroupID, req.Comment); err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
 	}
 	var it client
-	_ = h.db.QueryRow("SELECT id,name,identifier,identifier_type,group_id,comment,created_at,updated_at FROM clients WHERE id=?", id).
+	_ = h.db.QueryRow(storage.Rebind("SELECT id,name,identifier,identifier_type,group_id,comment,created_at::text,updated_at::text FROM clients WHERE id=?"), id).
 		Scan(&it.ID, &it.Name, &it.Identifier, &it.IdentifierType, &it.GroupID, &it.Comment, &it.CreatedAt, &it.UpdatedAt)
 	respond(w, http.StatusCreated, it)
 }
@@ -76,7 +77,7 @@ func (h *Handler) CreateClient(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetClient(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var it client
-	err := h.db.QueryRow("SELECT id,name,identifier,identifier_type,group_id,comment,created_at,updated_at FROM clients WHERE id=?", id).
+	err := h.db.QueryRow(storage.Rebind("SELECT id,name,identifier,identifier_type,group_id,comment,created_at::text,updated_at::text FROM clients WHERE id=?"), id).
 		Scan(&it.ID, &it.Name, &it.Identifier, &it.IdentifierType, &it.GroupID, &it.Comment, &it.CreatedAt, &it.UpdatedAt)
 	if err != nil {
 		respondError(w, http.StatusNotFound, "not found")
@@ -98,14 +99,14 @@ func (h *Handler) UpdateClient(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	res, err := h.db.Exec(`UPDATE clients SET
+	res, err := h.db.Exec(storage.Rebind(`UPDATE clients SET
 		name=COALESCE(?,name),
 		identifier=COALESCE(?,identifier),
 		identifier_type=COALESCE(?,identifier_type),
 		group_id=COALESCE(?,group_id),
 		comment=COALESCE(?,comment),
-		updated_at=datetime('now')
-		WHERE id=?`, req.Name, req.Identifier, req.IdentifierType, req.GroupID, req.Comment, id)
+		updated_at=NOW()
+		WHERE id=?`), req.Name, req.Identifier, req.IdentifierType, req.GroupID, req.Comment, id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
@@ -115,14 +116,14 @@ func (h *Handler) UpdateClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var it client
-	_ = h.db.QueryRow("SELECT id,name,identifier,identifier_type,group_id,comment,created_at,updated_at FROM clients WHERE id=?", id).
+	_ = h.db.QueryRow(storage.Rebind("SELECT id,name,identifier,identifier_type,group_id,comment,created_at::text,updated_at::text FROM clients WHERE id=?"), id).
 		Scan(&it.ID, &it.Name, &it.Identifier, &it.IdentifierType, &it.GroupID, &it.Comment, &it.CreatedAt, &it.UpdatedAt)
 	respond(w, http.StatusOK, it)
 }
 
 func (h *Handler) DeleteClient(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	res, err := h.db.Exec("DELETE FROM clients WHERE id=?", id)
+	res, err := h.db.Exec(storage.Rebind("DELETE FROM clients WHERE id=?"), id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
@@ -149,7 +150,7 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	offset := queryInt(r, "offset", 0)
 	var total int
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM groups").Scan(&total)
-	rows, err := h.db.Query("SELECT id,name,description,created_at,updated_at FROM groups ORDER BY name ASC LIMIT ? OFFSET ?", limit, offset)
+	rows, err := h.db.Query(storage.Rebind("SELECT id,name,description,created_at::text,updated_at::text FROM groups ORDER BY name ASC LIMIT ? OFFSET ?"), limit, offset)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
@@ -180,13 +181,13 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := uuid.New().String()
-	if _, err := h.db.Exec("INSERT INTO groups(id,name,description) VALUES(?,?,?)",
+	if _, err := h.db.Exec(storage.Rebind("INSERT INTO groups(id,name,description) VALUES(?,?,?)"),
 		id, req.Name, req.Description); err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
 	}
 	var it group
-	_ = h.db.QueryRow("SELECT id,name,description,created_at,updated_at FROM groups WHERE id=?", id).
+	_ = h.db.QueryRow(storage.Rebind("SELECT id,name,description,created_at::text,updated_at::text FROM groups WHERE id=?"), id).
 		Scan(&it.ID, &it.Name, &it.Description, &it.CreatedAt, &it.UpdatedAt)
 	respond(w, http.StatusCreated, it)
 }
@@ -194,7 +195,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetGroup(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var it group
-	err := h.db.QueryRow("SELECT id,name,description,created_at,updated_at FROM groups WHERE id=?", id).
+	err := h.db.QueryRow(storage.Rebind("SELECT id,name,description,created_at::text,updated_at::text FROM groups WHERE id=?"), id).
 		Scan(&it.ID, &it.Name, &it.Description, &it.CreatedAt, &it.UpdatedAt)
 	if err != nil {
 		respondError(w, http.StatusNotFound, "not found")
@@ -213,11 +214,11 @@ func (h *Handler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	res, err := h.db.Exec(`UPDATE groups SET
+	res, err := h.db.Exec(storage.Rebind(`UPDATE groups SET
 		name=COALESCE(?,name),
 		description=COALESCE(?,description),
-		updated_at=datetime('now')
-		WHERE id=?`, req.Name, req.Description, id)
+		updated_at=NOW()
+		WHERE id=?`), req.Name, req.Description, id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
@@ -227,14 +228,14 @@ func (h *Handler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var it group
-	_ = h.db.QueryRow("SELECT id,name,description,created_at,updated_at FROM groups WHERE id=?", id).
+	_ = h.db.QueryRow(storage.Rebind("SELECT id,name,description,created_at::text,updated_at::text FROM groups WHERE id=?"), id).
 		Scan(&it.ID, &it.Name, &it.Description, &it.CreatedAt, &it.UpdatedAt)
 	respond(w, http.StatusOK, it)
 }
 
 func (h *Handler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	res, err := h.db.Exec("DELETE FROM groups WHERE id=?", id)
+	res, err := h.db.Exec(storage.Rebind("DELETE FROM groups WHERE id=?"), id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return

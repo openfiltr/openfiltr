@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+
+	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
 type activityEntry struct {
@@ -42,10 +44,10 @@ func (h *Handler) ListActivity(w http.ResponseWriter, r *http.Request) {
 	var total int
 	countArgs := make([]interface{}, len(args))
 	copy(countArgs, args)
-	_ = h.db.QueryRow("SELECT COUNT(*) FROM activity_log"+where, countArgs...).Scan(&total)
+	_ = h.db.QueryRow(storage.Rebind("SELECT COUNT(*) FROM activity_log"+where), countArgs...).Scan(&total)
 
 	args = append(args, limit, offset)
-	rows, err := h.db.Query("SELECT id,client_ip,domain,query_type,action,rule_id,rule_source,response_time_ms,created_at FROM activity_log"+where+" ORDER BY created_at DESC LIMIT ? OFFSET ?", args...)
+	rows, err := h.db.Query(storage.Rebind("SELECT id,client_ip,domain,query_type,action,rule_id,rule_source,response_time_ms,created_at::text FROM activity_log"+where+" ORDER BY created_at DESC LIMIT ? OFFSET ?"), args...)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
@@ -85,9 +87,9 @@ func (h *Handler) ActivityStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respond(w, http.StatusOK, map[string]interface{}{
-		"total":              total,
-		"blocked":            blocked,
-		"allowed":            allowed,
+		"total":               total,
+		"blocked":             blocked,
+		"allowed":             allowed,
 		"top_blocked_domains": topBlocked,
 	})
 }

@@ -3,22 +3,22 @@ package storage
 import (
 	"database/sql"
 	"fmt"
-	"os"
-	"path/filepath"
+	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 )
 
-func Open(path string) (*sql.DB, error) {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return nil, fmt.Errorf("creating db dir: %w", err)
+func Open(databaseURL string) (*sql.DB, error) {
+	if databaseURL == "" {
+		return nil, fmt.Errorf("database url is required")
 	}
-	db, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_foreign_keys=on&_busy_timeout=5000")
+	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("opening db: %w", err)
 	}
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(1 * time.Hour)
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("pinging db: %w", err)
 	}

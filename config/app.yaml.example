@@ -14,7 +14,7 @@ dns:
       address: "9.9.9.9:53"
 
 storage:
-  path: "data/openfiltr.db"
+  database_url: "postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable"
 
 auth:
   # Set OPENFILTR_JWT_SECRET in environment — never store secrets in YAML

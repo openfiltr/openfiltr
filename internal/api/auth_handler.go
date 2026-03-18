@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/openfiltr/openfiltr/internal/auth"
+	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +20,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var id, hash, role string
-	if err := h.db.QueryRow("SELECT id,password_hash,role FROM users WHERE username=?", req.Username).Scan(&id, &hash, &role); err != nil {
+	if err := h.db.QueryRow(storage.Rebind("SELECT id,password_hash,role FROM users WHERE username=?"), req.Username).Scan(&id, &hash, &role); err != nil {
 		respondError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
@@ -64,7 +65,7 @@ func (h *Handler) Setup(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, "failed to hash password")
 		return
 	}
-	_, err = h.db.Exec(`INSERT INTO users(id,username,email,password_hash,role) VALUES(?,?,?,?,'admin')`,
+	_, err = h.db.Exec(storage.Rebind(`INSERT INTO users(id,username,email,password_hash,role) VALUES(?,?,?,?,'admin')`),
 		uuid.New().String(), req.Username, req.Username+"@localhost", hash)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to create user")
@@ -88,7 +89,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ListTokens(w http.ResponseWriter, r *http.Request) {
 	c := currentUser(r)
-	rows, err := h.db.Query(`SELECT id,name,scopes,last_used_at,expires_at,created_at FROM api_tokens WHERE user_id=? ORDER BY created_at DESC`, c.UserID)
+	rows, err := h.db.Query(storage.Rebind(`SELECT id,name,scopes,last_used_at::text,expires_at::text,created_at::text FROM api_tokens WHERE user_id=? ORDER BY created_at DESC`), c.UserID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
@@ -145,7 +146,7 @@ func (h *Handler) CreateToken(w http.ResponseWriter, r *http.Request) {
 		}
 		exp = t.UTC().Format("2006-01-02 15:04:05")
 	}
-	if _, err := h.db.Exec(`INSERT INTO api_tokens(id,user_id,name,token_hash,scopes,expires_at) VALUES(?,?,?,?,'[]',?)`,
+	if _, err := h.db.Exec(storage.Rebind(`INSERT INTO api_tokens(id,user_id,name,token_hash,scopes,expires_at) VALUES(?,?,?,?,'[]',?)`),
 		id, c.UserID, req.Name, hash, exp); err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
@@ -156,7 +157,7 @@ func (h *Handler) CreateToken(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteToken(w http.ResponseWriter, r *http.Request) {
 	c := currentUser(r)
 	id := chi.URLParam(r, "id")
-	res, err := h.db.Exec("DELETE FROM api_tokens WHERE id=? AND user_id=?", id, c.UserID)
+	res, err := h.db.Exec(storage.Rebind("DELETE FROM api_tokens WHERE id=? AND user_id=?"), id, c.UserID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return

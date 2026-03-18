@@ -11,7 +11,7 @@
 - [x] REST API + OpenAPI 3.1 spec
 - [x] YAML import & export
 - [x] Docker & curl install
-- [x] SQLite persistence
+- [x] PostgreSQL persistence
 - [x] Local user auth + API tokens
 - [x] Activity log & audit trail
 - [x] Backup & restore
@@ -30,7 +30,7 @@
 
 - [ ] Plugin system
 - [ ] Theme customisation
-- [ ] PostgreSQL storage option
+- [x] PostgreSQL storage
 - [ ] SSO integration
 - [ ] Policy templates
 

@@ -2,7 +2,9 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
+	"github.com/openfiltr/openfiltr/internal/storage"
 	"gopkg.in/yaml.v3"
 )
 
@@ -52,7 +54,7 @@ func (h *Handler) fetchRows(query string) []map[string]interface{} {
 		}
 		row := make(map[string]interface{})
 		for i, col := range cols {
-			row[col] = vals[i]
+			row[col] = normaliseRowValue(vals[i])
 		}
 		result = append(result, row)
 	}
@@ -69,9 +71,11 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 	imported := 0
 
 	for _, row := range payload.BlockRules {
-		id, _ := row["id"].(string)
-		pattern, _ := row["pattern"].(string)
-		ruleType, _ := row["rule_type"].(string)
+		id := stringValue(row, "id")
+		pattern := stringValue(row, "pattern")
+		ruleType := stringValue(row, "rule_type")
+		comment := nullableStringValue(row, "comment")
+		enabled := intValue(row, "enabled", 1)
 		if pattern == "" {
 			continue
 		}
@@ -81,15 +85,17 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 		if ruleType == "" {
 			ruleType = "exact"
 		}
-		_, _ = h.db.Exec(`INSERT INTO block_rules(id,pattern,rule_type) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET pattern=excluded.pattern,rule_type=excluded.rule_type,updated_at=datetime('now')`,
-			id, pattern, ruleType)
+		_, _ = h.db.Exec(storage.Rebind(`INSERT INTO block_rules(id,pattern,rule_type,comment,enabled) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET pattern=excluded.pattern,rule_type=excluded.rule_type,comment=excluded.comment,enabled=excluded.enabled,updated_at=NOW()`),
+			id, pattern, ruleType, comment, enabled)
 		imported++
 	}
 
 	for _, row := range payload.AllowRules {
-		id, _ := row["id"].(string)
-		pattern, _ := row["pattern"].(string)
-		ruleType, _ := row["rule_type"].(string)
+		id := stringValue(row, "id")
+		pattern := stringValue(row, "pattern")
+		ruleType := stringValue(row, "rule_type")
+		comment := nullableStringValue(row, "comment")
+		enabled := intValue(row, "enabled", 1)
 		if pattern == "" {
 			continue
 		}
@@ -99,16 +105,17 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 		if ruleType == "" {
 			ruleType = "exact"
 		}
-		_, _ = h.db.Exec(`INSERT INTO allow_rules(id,pattern,rule_type) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET pattern=excluded.pattern,rule_type=excluded.rule_type,updated_at=datetime('now')`,
-			id, pattern, ruleType)
+		_, _ = h.db.Exec(storage.Rebind(`INSERT INTO allow_rules(id,pattern,rule_type,comment,enabled) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET pattern=excluded.pattern,rule_type=excluded.rule_type,comment=excluded.comment,enabled=excluded.enabled,updated_at=NOW()`),
+			id, pattern, ruleType, comment, enabled)
 		imported++
 	}
 
 	for _, row := range payload.RuleSources {
-		id, _ := row["id"].(string)
-		name, _ := row["name"].(string)
-		url, _ := row["url"].(string)
-		format, _ := row["format"].(string)
+		id := stringValue(row, "id")
+		name := stringValue(row, "name")
+		url := stringValue(row, "url")
+		format := stringValue(row, "format")
+		enabled := intValue(row, "enabled", 1)
 		if name == "" || url == "" {
 			continue
 		}
@@ -118,32 +125,37 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 		if format == "" {
 			format = "hosts"
 		}
-		_, _ = h.db.Exec(`INSERT INTO rule_sources(id,name,url,format) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,url=excluded.url,format=excluded.format,updated_at=datetime('now')`,
-			id, name, url, format)
+		_, _ = h.db.Exec(storage.Rebind(`INSERT INTO rule_sources(id,name,url,format,enabled) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,url=excluded.url,format=excluded.format,enabled=excluded.enabled,updated_at=NOW()`),
+			id, name, url, format, enabled)
 		imported++
 	}
 
 	for _, row := range payload.DNSEntries {
-		id, _ := row["id"].(string)
-		host, _ := row["host"].(string)
-		entryType, _ := row["entry_type"].(string)
-		value, _ := row["value"].(string)
+		id := stringValue(row, "id")
+		host := stringValue(row, "host")
+		entryType := stringValue(row, "entry_type")
+		value := stringValue(row, "value")
+		comment := nullableStringValue(row, "comment")
+		ttl := intValue(row, "ttl", 300)
+		enabled := intValue(row, "enabled", 1)
 		if host == "" || entryType == "" || value == "" {
 			continue
 		}
 		if id == "" {
 			id = newID()
 		}
-		_, _ = h.db.Exec(`INSERT INTO dns_entries(id,host,entry_type,value) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET host=excluded.host,entry_type=excluded.entry_type,value=excluded.value,updated_at=datetime('now')`,
-			id, host, entryType, value)
+		_, _ = h.db.Exec(storage.Rebind(`INSERT INTO dns_entries(id,host,entry_type,value,ttl,comment,enabled) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET host=excluded.host,entry_type=excluded.entry_type,value=excluded.value,ttl=excluded.ttl,comment=excluded.comment,enabled=excluded.enabled,updated_at=NOW()`),
+			id, host, entryType, value, ttl, comment, enabled)
 		imported++
 	}
 
 	for _, row := range payload.UpstreamServers {
-		id, _ := row["id"].(string)
-		name, _ := row["name"].(string)
-		address, _ := row["address"].(string)
-		protocol, _ := row["protocol"].(string)
+		id := stringValue(row, "id")
+		name := stringValue(row, "name")
+		address := stringValue(row, "address")
+		protocol := stringValue(row, "protocol")
+		enabled := intValue(row, "enabled", 1)
+		priority := intValue(row, "priority", 0)
 		if name == "" || address == "" {
 			continue
 		}
@@ -153,8 +165,8 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 		if protocol == "" {
 			protocol = "udp"
 		}
-		_, _ = h.db.Exec(`INSERT INTO upstream_servers(id,name,address,protocol) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,address=excluded.address,protocol=excluded.protocol,updated_at=datetime('now')`,
-			id, name, address, protocol)
+		_, _ = h.db.Exec(storage.Rebind(`INSERT INTO upstream_servers(id,name,address,protocol,enabled,priority) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,address=excluded.address,protocol=excluded.protocol,enabled=excluded.enabled,priority=excluded.priority,updated_at=NOW()`),
+			id, name, address, protocol, enabled, priority)
 		imported++
 	}
 
@@ -164,4 +176,59 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 func newID() string {
 	// Use uuid package indirectly via the already-imported helper
 	return generateUUID()
+}
+
+func normaliseRowValue(value interface{}) interface{} {
+	switch v := value.(type) {
+	case []byte:
+		return string(v)
+	default:
+		return value
+	}
+}
+
+func stringValue(row map[string]interface{}, key string) string {
+	switch v := row[key].(type) {
+	case string:
+		return v
+	case []byte:
+		return string(v)
+	default:
+		return ""
+	}
+}
+
+func nullableStringValue(row map[string]interface{}, key string) interface{} {
+	switch v := row[key].(type) {
+	case nil:
+		return nil
+	case string:
+		return v
+	case []byte:
+		return string(v)
+	default:
+		return nil
+	}
+}
+
+func intValue(row map[string]interface{}, key string, fallback int) int {
+	switch v := row[key].(type) {
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case float64:
+		return int(v)
+	case string:
+		n, err := strconv.Atoi(v)
+		if err == nil {
+			return n
+		}
+	case []byte:
+		n, err := strconv.Atoi(string(v))
+		if err == nil {
+			return n
+		}
+	}
+	return fallback
 }

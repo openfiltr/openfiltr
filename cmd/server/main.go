@@ -44,7 +44,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := storage.Open(cfg.Storage.Path)
+	db, err := storage.Open(cfg.Storage.DatabaseURL)
 	if err != nil {
 		slog.Error("failed to open database", "error", err)
 		os.Exit(1)

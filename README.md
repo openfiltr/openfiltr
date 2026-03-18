@@ -2,10 +2,10 @@
 
 # OpenFiltr
 
-**An open, community-governed DNS filtering platform with a responsive UI, API-first design, portable YAML configuration, and frictionless self-hosted installation.**
+**An open, community-governed DNS filtering backend with API-first design, portable YAML configuration, and self-hosted deployment.**
 
 [![Licence: AGPLv3](https://img.shields.io/badge/Licence-AGPLv3-7C3AED.svg)](LICENSE)
-[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8.svg)](https://go.dev)
+[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8.svg)](https://go.dev)
 [![Build](https://github.com/openfiltr/openfiltr/actions/workflows/ci.yml/badge.svg)](https://github.com/openfiltr/openfiltr/actions)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-green.svg)](openapi/openapi.yaml)
 
@@ -22,8 +22,7 @@ OpenFiltr is a self-hosted DNS filtering server that blocks advertisements, trac
 
 - **API-first** — every feature is accessible through a documented REST API
 - **Portable** — configuration is YAML, importable and exportable in full or by section
-- **Fast** — single Go binary, SQLite storage, low memory footprint
-- **Friendly** — a responsive web UI with dark mode, mobile layout, and keyboard shortcuts
+- **Fast** — single Go binary, PostgreSQL-backed state, low memory footprint
 - **Open** — AGPLv3 licence, public roadmap, community governance
 
 ## Why does it exist?
@@ -42,30 +41,29 @@ Existing DNS filtering tools prioritise simplicity over extensibility. OpenFiltr
 curl -fsSL https://raw.githubusercontent.com/openfiltr/openfiltr/main/scripts/install.sh | sh
 ```
 
-The installer detects your OS and architecture, installs a single binary, creates a systemd service, and opens the first-run setup in your browser.
-
-### Docker
-
-```bash
-docker run -d \
-  --name openfiltr \
-  -p 53:53/udp -p 53:53/tcp -p 3000:3000 \
-  -v openfiltr-data:/data \
-  ghcr.io/openfiltr/openfiltr:latest
-```
+The installer detects your OS and architecture, installs a single binary, creates a systemd service, and writes a default config. PostgreSQL must already be running and reachable from the configured `database_url`.
 
 ### Docker Compose
 
 ```yaml
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: openfiltr
+      POSTGRES_USER: openfiltr
+      POSTGRES_PASSWORD: openfiltr
+
   openfiltr:
     image: ghcr.io/openfiltr/openfiltr:latest
+    depends_on:
+      - postgres
     ports:
       - "53:53/udp"
       - "53:53/tcp"
       - "3000:3000"
-    volumes:
-      - ./data:/data
+    environment:
+      - OPENFILTR_DATABASE_URL=postgres://openfiltr:openfiltr@postgres:5432/openfiltr?sslmode=disable
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/v1/system/health"]
@@ -85,11 +83,10 @@ Then open [http://localhost:3000](http://localhost:3000) to complete first-run s
 | Rule sources (hosts, domain lists) | ✅ | | |
 | Local DNS entries | ✅ | | |
 | Per-client / per-group policies | ✅ | | |
-| Responsive web UI (dark mode) | ✅ | | |
 | REST API + OpenAPI docs | ✅ | | |
 | YAML import & export | ✅ | | |
 | Docker & curl install | ✅ | | |
-| SQLite persistence | ✅ | | |
+| PostgreSQL persistence | ✅ | | |
 | Auth with local users + API tokens | ✅ | | |
 | Activity log & audit trail | ✅ | | |
 | Backup & restore | ✅ | | |
@@ -130,6 +127,9 @@ server:
   listen_http: ":3000"
   listen_dns: ":53"
 
+storage:
+  database_url: "postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable"
+
 dns:
   upstream_servers:
     - name: Cloudflare
@@ -149,8 +149,6 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/api/v1/config/expo
 ```
 /cmd/server       — application entrypoint
 /internal         — server internals (not importable)
-/pkg/sdk          — public Go SDK (Apache 2.0)
-/web              — React + TypeScript + Tailwind UI
 /openapi          — OpenAPI 3.1 specification
 /docs             — documentation
 /deploy/docker    — Dockerfile and Compose files
@@ -174,7 +172,6 @@ See [SECURITY.md](SECURITY.md) for our full disclosure policy.
 ## Licence
 
 - **Server**: [GNU Affero General Public Licence v3](LICENSE)
-- **SDKs**: Apache 2.0
 - **Documentation**: CC BY 4.0
 
 ## Governance

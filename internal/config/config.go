@@ -33,7 +33,7 @@ type UpstreamServer struct {
 }
 
 type Storage struct {
-	Path string `yaml:"path"`
+	DatabaseURL string `yaml:"database_url"`
 }
 
 type Auth struct {
@@ -56,7 +56,7 @@ func Defaults() *Config {
 			},
 			CacheTTL: 300,
 		},
-		Storage: Storage{Path: "data/openfiltr.db"},
+		Storage: Storage{DatabaseURL: "postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable"},
 		Auth:    Auth{JWTSecret: "change-me-in-production", TokenExpiry: 24},
 	}
 }
@@ -71,20 +71,20 @@ func Load(path string) (*Config, error) {
 		if err := os.WriteFile(path, data, 0o600); err != nil {
 			return nil, fmt.Errorf("writing default config: %w", err)
 		}
-		return cfg, nil
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("reading config: %w", err)
-	}
-	if err := yaml.Unmarshal(data, cfg); err != nil {
-		return nil, fmt.Errorf("parsing config: %w", err)
+	} else {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("reading config: %w", err)
+		}
+		if err := yaml.Unmarshal(data, cfg); err != nil {
+			return nil, fmt.Errorf("parsing config: %w", err)
+		}
 	}
 	if s := os.Getenv("OPENFILTR_JWT_SECRET"); s != "" {
 		cfg.Auth.JWTSecret = s
 	}
-	if s := os.Getenv("OPENFILTR_DB_PATH"); s != "" {
-		cfg.Storage.Path = s
+	if s := os.Getenv("OPENFILTR_DATABASE_URL"); s != "" {
+		cfg.Storage.DatabaseURL = s
 	}
 	return cfg, nil
 }

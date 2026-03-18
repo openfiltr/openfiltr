@@ -135,7 +135,7 @@ dns:
     - name: Quad9
       address: \"9.9.9.9:53\"
 storage:
-  path: \"${DATA_DIR}/openfiltr.db\"
+  database_url: \"postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable\"
 auth:
   token_expiry_hours: 24
 "
@@ -197,3 +197,4 @@ printf "${RESET}"
 echo ""
 info "To view logs: sudo journalctl -u openfiltr -f"
 info "To stop:      sudo systemctl stop openfiltr"
+warn "PostgreSQL must be running and reachable at the configured database_url before OpenFiltr will start."

@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+
+	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
 type auditEvent struct {
@@ -20,7 +22,7 @@ func (h *Handler) ListAuditEvents(w http.ResponseWriter, r *http.Request) {
 	offset := queryInt(r, "offset", 0)
 	var total int
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM audit_events").Scan(&total)
-	rows, err := h.db.Query("SELECT id,user_id,action,resource_type,resource_id,details,ip_address,created_at FROM audit_events ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
+	rows, err := h.db.Query(storage.Rebind("SELECT id,user_id,action,resource_type,resource_id,details,ip_address,created_at::text FROM audit_events ORDER BY created_at DESC LIMIT ? OFFSET ?"), limit, offset)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
 		return
