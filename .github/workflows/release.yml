@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install build dependencies
+        run: sudo apt-get install -y gcc libsqlite3-dev
+      - name: Build web UI
+        run: cd web && npm ci && npm run build
+      - name: Build binaries
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          mkdir -p dist
+          for GOARCH in amd64 arm64; do
+            GOOS=linux GOARCH=$GOARCH CGO_ENABLED=1 go build \
+              -ldflags="-s -w -X main.version=$VERSION" \
+              -o "dist/openfiltr-linux-$GOARCH" ./cmd/server
+          done
+          GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w -X main.version=$VERSION" \
+            -o "dist/openfiltr-darwin-amd64" ./cmd/server
+          GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w -X main.version=$VERSION" \
+            -o "dist/openfiltr-darwin-arm64" ./cmd/server
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/openfiltr/openfiltr:latest
+            ghcr.io/openfiltr/openfiltr:${{ github.ref_name }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

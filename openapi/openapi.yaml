@@ -1,0 +1,1521 @@
+openapi: 3.1.0
+
+info:
+  title: OpenFiltr API
+  version: 1.0.0
+  description: |
+    REST API for OpenFiltr — a self-hosted DNS filtering platform.
+
+    ## Authentication
+
+    All protected endpoints require a bearer token in the `Authorization` header:
+
+        Authorization: Bearer <token>
+
+    Tokens are obtained from `POST /api/v1/auth/login` (JWT) or created at
+    `POST /api/v1/auth/tokens` (long-lived API tokens prefixed with `oft_`).
+
+    Browser sessions may also use the `openfiltr_token` HttpOnly cookie set on login.
+  contact:
+    name: OpenFiltr Community
+    url: https://github.com/openfiltr/openfiltr
+  license:
+    name: AGPLv3
+    url: https://www.gnu.org/licenses/agpl-3.0.html
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [message]
+          properties:
+            message:
+              type: string
+              example: invalid credentials
+
+    BlockRule:
+      type: object
+      required: [id, pattern, rule_type, enabled, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        pattern:
+          type: string
+          example: "*.ads.example.com"
+        rule_type:
+          type: string
+          enum: [exact, wildcard, regex]
+          default: exact
+        comment:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AllowRule:
+      type: object
+      required: [id, pattern, rule_type, enabled, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        pattern:
+          type: string
+        rule_type:
+          type: string
+          enum: [exact, wildcard, regex]
+        comment:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RuleSource:
+      type: object
+      required: [id, name, url, format, enabled]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        format:
+          type: string
+          enum: [hosts, domain, adblock]
+        enabled:
+          type: boolean
+        rule_count:
+          type: integer
+          default: 0
+        last_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    UpstreamServer:
+      type: object
+      required: [id, name, address, protocol, enabled]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+          example: "1.1.1.1:53"
+        protocol:
+          type: string
+          enum: [udp, tcp, doh, dot]
+          default: udp
+        enabled:
+          type: boolean
+        priority:
+          type: integer
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+
+    DNSEntry:
+      type: object
+      required: [id, host, entry_type, value, enabled]
+      properties:
+        id:
+          type: string
+          format: uuid
+        host:
+          type: string
+          example: "router.home"
+        entry_type:
+          type: string
+          enum: [A, AAAA, CNAME, MX, TXT, PTR, SRV]
+        value:
+          type: string
+          example: "192.168.1.1"
+        ttl:
+          type: integer
+          default: 300
+        comment:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Client:
+      type: object
+      required: [id, name, identifier, identifier_type]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        identifier:
+          type: string
+          example: "192.168.1.100"
+        identifier_type:
+          type: string
+          enum: [ip, cidr, mac]
+          default: ip
+        group_id:
+          type: string
+          format: uuid
+          nullable: true
+        comment:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Group:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ActivityEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        client_ip:
+          type: string
+        domain:
+          type: string
+        query_type:
+          type: string
+          example: A
+        action:
+          type: string
+          enum: [allowed, blocked]
+        rule_source:
+          type: string
+          nullable: true
+        response_time_ms:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    ApiToken:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        scopes:
+          type: string
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+          nullable: true
+        action:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+          nullable: true
+        ip_address:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        time:
+          type: string
+          format: date-time
+
+    ListMeta:
+      type: object
+      required: [total]
+      properties:
+        total:
+          type: integer
+
+paths:
+
+  # ── System ─────────────────────────────────────────────────────────────────
+
+  /api/v1/system/health:
+    get:
+      tags: [system]
+      summary: Health check
+      description: Returns 200 when the service is running. No authentication required.
+      security: []
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/system/version:
+    get:
+      tags: [system]
+      summary: Get server version
+      security: []
+      operationId: getVersion
+      responses:
+        "200":
+          description: Version information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    example: v1.0.0
+
+  /api/v1/system/status:
+    get:
+      tags: [system]
+      summary: Get system status
+      operationId: getStatus
+      responses:
+        "200":
+          description: System status including rule counts and version
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  block_rule_count:
+                    type: integer
+                  allow_rule_count:
+                    type: integer
+                  client_count:
+                    type: integer
+                  version:
+                    type: string
+        "401":
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/system/stats:
+    get:
+      tags: [system]
+      summary: Get query statistics
+      operationId: getStats
+      responses:
+        "200":
+          description: Aggregated DNS query statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_queries:
+                    type: integer
+                  blocked_queries:
+                    type: integer
+                  allowed_queries:
+                    type: integer
+                  block_rate:
+                    type: string
+                    example: "23.45"
+
+  # ── Auth ───────────────────────────────────────────────────────────────────
+
+  /api/v1/auth/setup:
+    post:
+      tags: [auth]
+      summary: First-run setup
+      description: Creates the initial admin user. Returns 409 if a user already exists.
+      security: []
+      operationId: setup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  minLength: 8
+            example:
+              username: admin
+              password: changeme123
+      responses:
+        "201":
+          description: Setup complete
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Setup already completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: Log in
+      description: Validates credentials and returns a JWT token. Also sets the `openfiltr_token` HttpOnly cookie for browser sessions.
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+            example:
+              username: admin
+              password: changeme123
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token — include as Bearer token in subsequent requests
+                  username:
+                    type: string
+                  role:
+                    type: string
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: Log out
+      description: Clears the session cookie.
+      operationId: logout
+      responses:
+        "200":
+          description: Logged out successfully
+
+  /api/v1/auth/me:
+    get:
+      tags: [auth]
+      summary: Get current user
+      operationId: getMe
+      responses:
+        "200":
+          description: Current authenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  username:
+                    type: string
+                  role:
+                    type: string
+
+  /api/v1/auth/tokens:
+    get:
+      tags: [auth]
+      summary: List API tokens
+      description: Lists all API tokens for the current user. Raw token values are never returned after creation.
+      operationId: listTokens
+      responses:
+        "200":
+          description: Token list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiToken"
+                  total:
+                    type: integer
+    post:
+      tags: [auth]
+      summary: Create API token
+      description: Creates a new API token. The raw token value is returned **once only** — store it securely.
+      operationId: createToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: "CI deployment"
+                expires_at:
+                  type: string
+                  format: date-time
+                  description: Optional expiry date (RFC3339)
+      responses:
+        "201":
+          description: Token created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  token:
+                    type: string
+                    description: "Raw token value — shown only once. Begins with oft_"
+        "400":
+          description: Validation error
+
+  /api/v1/auth/tokens/{id}:
+    delete:
+      tags: [auth]
+      summary: Revoke API token
+      operationId: deleteToken
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Token revoked
+        "404":
+          description: Token not found
+
+  # ── Filtering — Block Rules ────────────────────────────────────────────────
+
+  /api/v1/filtering/block-rules:
+    get:
+      tags: [filtering]
+      summary: List block rules
+      operationId: listBlockRules
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: search
+          in: query
+          description: Filter by pattern prefix
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Block rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BlockRule"
+                  total:
+                    type: integer
+    post:
+      tags: [filtering]
+      summary: Create block rule
+      operationId: createBlockRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pattern]
+              properties:
+                pattern:
+                  type: string
+                  example: "*.ads.example.com"
+                rule_type:
+                  type: string
+                  enum: [exact, wildcard, regex]
+                  default: exact
+                comment:
+                  type: string
+                enabled:
+                  type: boolean
+                  default: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockRule"
+        "400":
+          description: Validation error
+
+  /api/v1/filtering/block-rules/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [filtering]
+      summary: Get block rule
+      operationId: getBlockRule
+      responses:
+        "200":
+          description: Block rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockRule"
+        "404":
+          description: Not found
+    put:
+      tags: [filtering]
+      summary: Update block rule
+      operationId: updateBlockRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pattern:
+                  type: string
+                rule_type:
+                  type: string
+                  enum: [exact, wildcard, regex]
+                comment:
+                  type: string
+                enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockRule"
+        "404":
+          description: Not found
+    delete:
+      tags: [filtering]
+      summary: Delete block rule
+      operationId: deleteBlockRule
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ── Filtering — Allow Rules ────────────────────────────────────────────────
+
+  /api/v1/filtering/allow-rules:
+    get:
+      tags: [filtering]
+      summary: List allow rules
+      operationId: listAllowRules
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Allow rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AllowRule"
+                  total:
+                    type: integer
+    post:
+      tags: [filtering]
+      summary: Create allow rule
+      operationId: createAllowRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pattern]
+              properties:
+                pattern:
+                  type: string
+                rule_type:
+                  type: string
+                  enum: [exact, wildcard, regex]
+                comment:
+                  type: string
+                enabled:
+                  type: boolean
+                  default: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AllowRule"
+
+  /api/v1/filtering/allow-rules/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [filtering]
+      summary: Get allow rule
+      operationId: getAllowRule
+      responses:
+        "200":
+          description: Allow rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AllowRule"
+        "404":
+          description: Not found
+    put:
+      tags: [filtering]
+      summary: Update allow rule
+      operationId: updateAllowRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pattern:
+                  type: string
+                rule_type:
+                  type: string
+                enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated
+    delete:
+      tags: [filtering]
+      summary: Delete allow rule
+      operationId: deleteAllowRule
+      responses:
+        "200":
+          description: Deleted
+
+  # ── Filtering — Rule Sources ───────────────────────────────────────────────
+
+  /api/v1/filtering/sources:
+    get:
+      tags: [filtering]
+      summary: List rule sources
+      operationId: listRuleSources
+      responses:
+        "200":
+          description: Rule sources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RuleSource"
+                  total:
+                    type: integer
+    post:
+      tags: [filtering]
+      summary: Add rule source
+      operationId: createRuleSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, url]
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+                format:
+                  type: string
+                  enum: [hosts, domain, adblock]
+                  default: hosts
+                enabled:
+                  type: boolean
+                  default: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleSource"
+
+  /api/v1/filtering/sources/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [filtering]
+      summary: Get rule source
+      operationId: getRuleSource
+      responses:
+        "200":
+          description: Rule source
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleSource"
+    put:
+      tags: [filtering]
+      summary: Update rule source
+      operationId: updateRuleSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated
+    delete:
+      tags: [filtering]
+      summary: Delete rule source
+      operationId: deleteRuleSource
+      responses:
+        "200":
+          description: Deleted
+
+  /api/v1/filtering/sources/{id}/refresh:
+    post:
+      tags: [filtering]
+      summary: Refresh rule source
+      description: Fetches the source URL and updates block rules.
+      operationId: refreshRuleSource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Refresh triggered
+        "404":
+          description: Not found
+
+  # ── DNS — Upstream Servers ─────────────────────────────────────────────────
+
+  /api/v1/dns/upstream-servers:
+    get:
+      tags: [dns]
+      summary: List upstream DNS servers
+      operationId: listUpstreamServers
+      responses:
+        "200":
+          description: Upstream servers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UpstreamServer"
+                  total:
+                    type: integer
+    post:
+      tags: [dns]
+      summary: Add upstream server
+      operationId: createUpstreamServer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, address]
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                  example: "1.1.1.1:53"
+                protocol:
+                  type: string
+                  enum: [udp, tcp, doh, dot]
+                  default: udp
+                priority:
+                  type: integer
+                  default: 0
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamServer"
+
+  /api/v1/dns/upstream-servers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [dns]
+      summary: Get upstream server
+      operationId: getUpstreamServer
+      responses:
+        "200":
+          description: Upstream server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpstreamServer"
+    put:
+      tags: [dns]
+      summary: Update upstream server
+      operationId: updateUpstreamServer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                protocol:
+                  type: string
+                enabled:
+                  type: boolean
+                priority:
+                  type: integer
+      responses:
+        "200":
+          description: Updated
+    delete:
+      tags: [dns]
+      summary: Delete upstream server
+      operationId: deleteUpstreamServer
+      responses:
+        "200":
+          description: Deleted
+
+  # ── DNS — Entries ──────────────────────────────────────────────────────────
+
+  /api/v1/dns/entries:
+    get:
+      tags: [dns]
+      summary: List local DNS entries
+      operationId: listDNSEntries
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: DNS entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DNSEntry"
+                  total:
+                    type: integer
+    post:
+      tags: [dns]
+      summary: Create local DNS entry
+      operationId: createDNSEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [host, entry_type, value]
+              properties:
+                host:
+                  type: string
+                  example: "router.home"
+                entry_type:
+                  type: string
+                  enum: [A, AAAA, CNAME, MX, TXT, PTR, SRV]
+                value:
+                  type: string
+                ttl:
+                  type: integer
+                  default: 300
+                comment:
+                  type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DNSEntry"
+
+  /api/v1/dns/entries/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [dns]
+      summary: Get DNS entry
+      operationId: getDNSEntry
+      responses:
+        "200":
+          description: DNS entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DNSEntry"
+    put:
+      tags: [dns]
+      summary: Update DNS entry
+      operationId: updateDNSEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                host:
+                  type: string
+                value:
+                  type: string
+                ttl:
+                  type: integer
+                enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated
+    delete:
+      tags: [dns]
+      summary: Delete DNS entry
+      operationId: deleteDNSEntry
+      responses:
+        "200":
+          description: Deleted
+
+  # ── Clients ────────────────────────────────────────────────────────────────
+
+  /api/v1/clients:
+    get:
+      tags: [clients]
+      summary: List clients
+      operationId: listClients
+      responses:
+        "200":
+          description: Clients
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Client"
+                  total:
+                    type: integer
+    post:
+      tags: [clients]
+      summary: Register client
+      operationId: createClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, identifier]
+              properties:
+                name:
+                  type: string
+                identifier:
+                  type: string
+                identifier_type:
+                  type: string
+                  enum: [ip, cidr, mac]
+                  default: ip
+                group_id:
+                  type: string
+                comment:
+                  type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /api/v1/clients/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [clients]
+      summary: Get client
+      operationId: getClient
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    put:
+      tags: [clients]
+      summary: Update client
+      operationId: updateClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                group_id:
+                  type: string
+                  nullable: true
+                comment:
+                  type: string
+      responses:
+        "200":
+          description: Updated
+    delete:
+      tags: [clients]
+      summary: Delete client
+      operationId: deleteClient
+      responses:
+        "200":
+          description: Deleted
+
+  # ── Groups ─────────────────────────────────────────────────────────────────
+
+  /api/v1/groups:
+    get:
+      tags: [clients]
+      summary: List groups
+      operationId: listGroups
+      responses:
+        "200":
+          description: Groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Group"
+                  total:
+                    type: integer
+    post:
+      tags: [clients]
+      summary: Create group
+      operationId: createGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+
+  /api/v1/groups/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [clients]
+      summary: Get group
+      operationId: getGroup
+      responses:
+        "200":
+          description: Group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+    put:
+      tags: [clients]
+      summary: Update group
+      operationId: updateGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        "200":
+          description: Updated
+    delete:
+      tags: [clients]
+      summary: Delete group
+      operationId: deleteGroup
+      responses:
+        "200":
+          description: Deleted
+
+  # ── Activity ───────────────────────────────────────────────────────────────
+
+  /api/v1/activity:
+    get:
+      tags: [activity]
+      summary: List activity log
+      operationId: listActivity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: client_ip
+          in: query
+          schema:
+            type: string
+        - name: domain
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [allowed, blocked]
+      responses:
+        "200":
+          description: Activity entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ActivityEntry"
+                  total:
+                    type: integer
+
+  /api/v1/activity/stats:
+    get:
+      tags: [activity]
+      summary: Get activity statistics
+      operationId: getActivityStats
+      responses:
+        "200":
+          description: Aggregated activity statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_queries:
+                    type: integer
+                  blocked_queries:
+                    type: integer
+                  allowed_queries:
+                    type: integer
+                  block_rate:
+                    type: string
+
+  # ── Config ─────────────────────────────────────────────────────────────────
+
+  /api/v1/config/export:
+    get:
+      tags: [config]
+      summary: Export configuration
+      description: Exports the full configuration as a YAML file. Sensitive fields (JWT secret, password hashes) are excluded.
+      operationId: exportConfig
+      responses:
+        "200":
+          description: YAML configuration
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /api/v1/config/import:
+    post:
+      tags: [config]
+      summary: Import configuration
+      description: Imports a YAML or JSON configuration. Use `?dry_run=true` to validate without writing.
+      operationId: importConfig
+      parameters:
+        - name: dry_run
+          in: query
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/yaml:
+            schema:
+              type: string
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Import successful
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ── Audit ──────────────────────────────────────────────────────────────────
+
+  /api/v1/audit:
+    get:
+      tags: [audit]
+      summary: List audit events
+      operationId: listAuditEvents
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEvent"
+                  total:
+                    type: integer
+
+tags:
+  - name: system
+    description: System health, status, and statistics
+  - name: auth
+    description: Authentication, session management, and API tokens
+  - name: filtering
+    description: Block rules, allow rules, and rule sources
+  - name: dns
+    description: Upstream servers and local DNS entries
+  - name: clients
+    description: Client registration and group management
+  - name: activity
+    description: DNS query activity log and statistics
+  - name: config
+    description: Configuration import and export
+  - name: audit
+    description: Audit trail for administrative actions

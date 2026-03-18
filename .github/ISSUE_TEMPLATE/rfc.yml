@@ -1,0 +1,34 @@
+name: RFC (Request for Comments)
+description: Propose a significant design change
+labels: ["rfc", "discussion"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Detailed Design
+    validations:
+      required: true
+  - type: textarea
+    id: drawbacks
+    attributes:
+      label: Drawbacks
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+  - type: textarea
+    id: unresolved
+    attributes:
+      label: Unresolved Questions

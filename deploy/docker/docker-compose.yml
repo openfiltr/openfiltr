@@ -1,0 +1,24 @@
+services:
+  openfiltr:
+    image: ghcr.io/openfiltr/openfiltr:latest
+    container_name: openfiltr
+    ports:
+      - "53:5353/udp"
+      - "53:5353/tcp"
+      - "3000:3000"
+    volumes:
+      - openfiltr-data:/data
+      - openfiltr-config:/etc/openfiltr
+    environment:
+      - OPENFILTR_DB_PATH=/data/openfiltr.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/v1/system/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  openfiltr-data:
+  openfiltr-config:

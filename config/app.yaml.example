@@ -1,0 +1,21 @@
+version: 1
+
+server:
+  listen_http: ":3000"
+  listen_dns: ":53"
+  base_url: "http://localhost:3000"
+
+dns:
+  cache_ttl: 300
+  upstream_servers:
+    - name: Cloudflare
+      address: "1.1.1.1:53"
+    - name: Quad9
+      address: "9.9.9.9:53"
+
+storage:
+  path: "data/openfiltr.db"
+
+auth:
+  # Set OPENFILTR_JWT_SECRET in environment — never store secrets in YAML
+  token_expiry_hours: 24

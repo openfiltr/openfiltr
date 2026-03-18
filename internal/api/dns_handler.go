@@ -1,0 +1,281 @@
+package api
+
+import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+)
+
+// ---- Upstream servers ----
+
+type upstreamServer struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Address   string `json:"address"`
+	Protocol  string `json:"protocol"`
+	Enabled   int    `json:"enabled"`
+	Priority  int    `json:"priority"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+func (h *Handler) ListUpstreamServers(w http.ResponseWriter, r *http.Request) {
+	limit := queryInt(r, "limit", 100)
+	offset := queryInt(r, "offset", 0)
+	var total int
+	_ = h.db.QueryRow("SELECT COUNT(*) FROM upstream_servers").Scan(&total)
+	rows, err := h.db.Query("SELECT id,name,address,protocol,enabled,priority,created_at,updated_at FROM upstream_servers ORDER BY priority ASC,created_at DESC LIMIT ? OFFSET ?", limit, offset)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	defer rows.Close()
+	items := []upstreamServer{}
+	for rows.Next() {
+		var it upstreamServer
+		if err := rows.Scan(&it.ID, &it.Name, &it.Address, &it.Protocol, &it.Enabled, &it.Priority, &it.CreatedAt, &it.UpdatedAt); err != nil {
+			continue
+		}
+		items = append(items, it)
+	}
+	respond(w, http.StatusOK, map[string]interface{}{"items": items, "total": total})
+}
+
+func (h *Handler) CreateUpstreamServer(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name     string `json:"name"`
+		Address  string `json:"address"`
+		Protocol string `json:"protocol"`
+		Enabled  *int   `json:"enabled"`
+		Priority *int   `json:"priority"`
+	}
+	if err := decode(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Name == "" || req.Address == "" {
+		respondError(w, http.StatusBadRequest, "name and address are required")
+		return
+	}
+	if req.Protocol == "" {
+		req.Protocol = "udp"
+	}
+	enabled := 1
+	if req.Enabled != nil {
+		enabled = *req.Enabled
+	}
+	priority := 0
+	if req.Priority != nil {
+		priority = *req.Priority
+	}
+	id := uuid.New().String()
+	if _, err := h.db.Exec("INSERT INTO upstream_servers(id,name,address,protocol,enabled,priority) VALUES(?,?,?,?,?,?)",
+		id, req.Name, req.Address, req.Protocol, enabled, priority); err != nil {
+		respondError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	var it upstreamServer
+	_ = h.db.QueryRow("SELECT id,name,address,protocol,enabled,priority,created_at,updated_at FROM upstream_servers WHERE id=?", id).
+		Scan(&it.ID, &it.Name, &it.Address, &it.Protocol, &it.Enabled, &it.Priority, &it.CreatedAt, &it.UpdatedAt)
+	respond(w, http.StatusCreated, it)
+}
+
+func (h *Handler) GetUpstreamServer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var it upstreamServer
+	err := h.db.QueryRow("SELECT id,name,address,protocol,enabled,priority,created_at,updated_at FROM upstream_servers WHERE id=?", id).
+		Scan(&it.ID, &it.Name, &it.Address, &it.Protocol, &it.Enabled, &it.Priority, &it.CreatedAt, &it.UpdatedAt)
+	if err != nil {
+		respondError(w, http.StatusNotFound, "not found")
+		return
+	}
+	respond(w, http.StatusOK, it)
+}
+
+func (h *Handler) UpdateUpstreamServer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req struct {
+		Name     *string `json:"name"`
+		Address  *string `json:"address"`
+		Protocol *string `json:"protocol"`
+		Enabled  *int    `json:"enabled"`
+		Priority *int    `json:"priority"`
+	}
+	if err := decode(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	res, err := h.db.Exec(`UPDATE upstream_servers SET
+		name=COALESCE(?,name),
+		address=COALESCE(?,address),
+		protocol=COALESCE(?,protocol),
+		enabled=COALESCE(?,enabled),
+		priority=COALESCE(?,priority),
+		updated_at=datetime('now')
+		WHERE id=?`, req.Name, req.Address, req.Protocol, req.Enabled, req.Priority, id)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		respondError(w, http.StatusNotFound, "not found")
+		return
+	}
+	var it upstreamServer
+	_ = h.db.QueryRow("SELECT id,name,address,protocol,enabled,priority,created_at,updated_at FROM upstream_servers WHERE id=?", id).
+		Scan(&it.ID, &it.Name, &it.Address, &it.Protocol, &it.Enabled, &it.Priority, &it.CreatedAt, &it.UpdatedAt)
+	respond(w, http.StatusOK, it)
+}
+
+func (h *Handler) DeleteUpstreamServer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	res, err := h.db.Exec("DELETE FROM upstream_servers WHERE id=?", id)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		respondError(w, http.StatusNotFound, "not found")
+		return
+	}
+	respond(w, http.StatusOK, map[string]string{"message": "deleted"})
+}
+
+// ---- DNS entries ----
+
+type dnsEntry struct {
+	ID        string  `json:"id"`
+	Host      string  `json:"host"`
+	EntryType string  `json:"entry_type"`
+	Value     string  `json:"value"`
+	TTL       int     `json:"ttl"`
+	Comment   *string `json:"comment"`
+	Enabled   int     `json:"enabled"`
+	CreatedBy *string `json:"created_by"`
+	CreatedAt string  `json:"created_at"`
+	UpdatedAt string  `json:"updated_at"`
+}
+
+func (h *Handler) ListDNSEntries(w http.ResponseWriter, r *http.Request) {
+	limit := queryInt(r, "limit", 100)
+	offset := queryInt(r, "offset", 0)
+	var total int
+	_ = h.db.QueryRow("SELECT COUNT(*) FROM dns_entries").Scan(&total)
+	rows, err := h.db.Query("SELECT id,host,entry_type,value,ttl,comment,enabled,created_by,created_at,updated_at FROM dns_entries ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	defer rows.Close()
+	items := []dnsEntry{}
+	for rows.Next() {
+		var it dnsEntry
+		if err := rows.Scan(&it.ID, &it.Host, &it.EntryType, &it.Value, &it.TTL, &it.Comment, &it.Enabled, &it.CreatedBy, &it.CreatedAt, &it.UpdatedAt); err != nil {
+			continue
+		}
+		items = append(items, it)
+	}
+	respond(w, http.StatusOK, map[string]interface{}{"items": items, "total": total})
+}
+
+func (h *Handler) CreateDNSEntry(w http.ResponseWriter, r *http.Request) {
+	c := currentUser(r)
+	var req struct {
+		Host      string  `json:"host"`
+		EntryType string  `json:"entry_type"`
+		Value     string  `json:"value"`
+		TTL       *int    `json:"ttl"`
+		Comment   *string `json:"comment"`
+		Enabled   *int    `json:"enabled"`
+	}
+	if err := decode(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Host == "" || req.EntryType == "" || req.Value == "" {
+		respondError(w, http.StatusBadRequest, "host, entry_type and value are required")
+		return
+	}
+	ttl := 300
+	if req.TTL != nil {
+		ttl = *req.TTL
+	}
+	enabled := 1
+	if req.Enabled != nil {
+		enabled = *req.Enabled
+	}
+	id := uuid.New().String()
+	if _, err := h.db.Exec("INSERT INTO dns_entries(id,host,entry_type,value,ttl,comment,enabled,created_by) VALUES(?,?,?,?,?,?,?,?)",
+		id, req.Host, req.EntryType, req.Value, ttl, req.Comment, enabled, c.UserID); err != nil {
+		respondError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	var it dnsEntry
+	_ = h.db.QueryRow("SELECT id,host,entry_type,value,ttl,comment,enabled,created_by,created_at,updated_at FROM dns_entries WHERE id=?", id).
+		Scan(&it.ID, &it.Host, &it.EntryType, &it.Value, &it.TTL, &it.Comment, &it.Enabled, &it.CreatedBy, &it.CreatedAt, &it.UpdatedAt)
+	respond(w, http.StatusCreated, it)
+}
+
+func (h *Handler) GetDNSEntry(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var it dnsEntry
+	err := h.db.QueryRow("SELECT id,host,entry_type,value,ttl,comment,enabled,created_by,created_at,updated_at FROM dns_entries WHERE id=?", id).
+		Scan(&it.ID, &it.Host, &it.EntryType, &it.Value, &it.TTL, &it.Comment, &it.Enabled, &it.CreatedBy, &it.CreatedAt, &it.UpdatedAt)
+	if err != nil {
+		respondError(w, http.StatusNotFound, "not found")
+		return
+	}
+	respond(w, http.StatusOK, it)
+}
+
+func (h *Handler) UpdateDNSEntry(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req struct {
+		Host      *string `json:"host"`
+		EntryType *string `json:"entry_type"`
+		Value     *string `json:"value"`
+		TTL       *int    `json:"ttl"`
+		Comment   *string `json:"comment"`
+		Enabled   *int    `json:"enabled"`
+	}
+	if err := decode(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	res, err := h.db.Exec(`UPDATE dns_entries SET
+		host=COALESCE(?,host),
+		entry_type=COALESCE(?,entry_type),
+		value=COALESCE(?,value),
+		ttl=COALESCE(?,ttl),
+		comment=COALESCE(?,comment),
+		enabled=COALESCE(?,enabled),
+		updated_at=datetime('now')
+		WHERE id=?`, req.Host, req.EntryType, req.Value, req.TTL, req.Comment, req.Enabled, id)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		respondError(w, http.StatusNotFound, "not found")
+		return
+	}
+	var it dnsEntry
+	_ = h.db.QueryRow("SELECT id,host,entry_type,value,ttl,comment,enabled,created_by,created_at,updated_at FROM dns_entries WHERE id=?", id).
+		Scan(&it.ID, &it.Host, &it.EntryType, &it.Value, &it.TTL, &it.Comment, &it.Enabled, &it.CreatedBy, &it.CreatedAt, &it.UpdatedAt)
+	respond(w, http.StatusOK, it)
+}
+
+func (h *Handler) DeleteDNSEntry(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	res, err := h.db.Exec("DELETE FROM dns_entries WHERE id=?", id)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		respondError(w, http.StatusNotFound, "not found")
+		return
+	}
+	respond(w, http.StatusOK, map[string]string{"message": "deleted"})
+}
