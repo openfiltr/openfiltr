@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,8 +15,9 @@ func TestExportPayloadIncludesSchemaVersion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("yaml.Marshal() error = %v", err)
 	}
-	if !strings.HasPrefix(string(data), "version: 1\n") {
-		t.Fatalf("export YAML = %q, want prefix %q", string(data), "version: 1\\n")
+	want := fmt.Sprintf("version: %d\n", configExportVersion)
+	if !strings.HasPrefix(string(data), want) {
+		t.Fatalf("export YAML = %q, want prefix %q", string(data), want)
 	}
 }
 
@@ -44,7 +46,7 @@ func TestImportConfigRejectsMissingVersion(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("ImportConfig() status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
-	if body := w.Body.String(); !strings.Contains(body, "unsupported config version 0") {
+	if body := w.Body.String(); !strings.Contains(body, "missing required top-level version") {
 		t.Fatalf("ImportConfig() body = %q, want missing version error", body)
 	}
 }

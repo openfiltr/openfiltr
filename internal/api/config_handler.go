@@ -69,7 +69,7 @@ func (h *Handler) fetchRows(query string) []map[string]interface{} {
 func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 	var payload exportPayload
 	if err := yaml.NewDecoder(r.Body).Decode(&payload); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid YAML: "+err.Error())
+		respondError(w, http.StatusBadRequest, "invalid config payload: "+err.Error())
 		return
 	}
 	if err := validateConfigVersion(payload.Version); err != nil {
@@ -183,6 +183,9 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func validateConfigVersion(version int) error {
+	if version == 0 {
+		return fmt.Errorf("missing required top-level version field")
+	}
 	if version != configExportVersion {
 		return fmt.Errorf("unsupported config version %d: expected version %d", version, configExportVersion)
 	}
