@@ -38,6 +38,9 @@ secrets.env
 .DS_Store
 Thumbs.db
 
+# Local worktrees
+.worktrees/
+
 # Binary
 openfiltr
 openfiltr-*
