@@ -85,9 +85,9 @@ func (h *Handler) ActivityStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respond(w, http.StatusOK, map[string]interface{}{
-		"total":              total,
-		"blocked":            blocked,
-		"allowed":            allowed,
+		"total":               total,
+		"blocked":             blocked,
+		"allowed":             allowed,
 		"top_blocked_domains": topBlocked,
 	})
 }

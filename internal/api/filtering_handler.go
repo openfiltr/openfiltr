@@ -24,7 +24,7 @@ func (h *Handler) listRules(w http.ResponseWriter, r *http.Request, table string
 	limit := queryInt(r, "limit", 100)
 	offset := queryInt(r, "offset", 0)
 	var total int
-	_ = h.db.QueryRow("SELECT COUNT(*) FROM "+table).Scan(&total)
+	_ = h.db.QueryRow("SELECT COUNT(*) FROM " + table).Scan(&total)
 	rows, err := h.db.Query("SELECT id,pattern,rule_type,comment,enabled,created_by,created_at,updated_at FROM "+table+" ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
