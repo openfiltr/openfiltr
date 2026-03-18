@@ -10,7 +10,7 @@
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-green.svg)](openapi/openapi.yaml)
 
 > ⚠️ OpenFiltr is in active development. The API and configuration format are not yet stable.  
-> This project was bootstrapped with the assistance of AI — see [CONTRIBUTING.md](CONTRIBUTING.md).
+> This project was bootstrapped with the assistance of AI. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 </div>
 
@@ -18,12 +18,12 @@
 
 ## What is OpenFiltr?
 
-OpenFiltr is a self-hosted DNS filtering server that blocks advertisements, trackers, and malicious domains across your entire network. It is built to be:
+OpenFiltr is a self-hosted DNS filtering server that blocks advertisements, trackers, and malicious domains across your entire network. The repository is currently backend-first. The API, DNS engine, auth, config, storage, Docker, and workflow files are the source of truth. It is built to be:
 
-- **API-first** — every feature is accessible through a documented REST API
-- **Portable** — configuration is YAML, importable and exportable in full or by section
-- **Fast** — single Go binary, PostgreSQL-backed state, low memory footprint
-- **Open** — AGPLv3 licence, public roadmap, community governance
+- **API-first**: every feature is accessible through a documented REST API
+- **Portable**: configuration is YAML, importable and exportable in full or by section
+- **Fast**: single Go binary, PostgreSQL-backed state, low memory footprint
+- **Open**: AGPLv3 licence, public roadmap, community governance
 
 ## Why does it exist?
 
@@ -72,7 +72,7 @@ services:
       retries: 3
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) to complete first-run setup.
+Then use the API on [http://localhost:3000](http://localhost:3000) to verify the service and complete first-run setup through the auth endpoints.
 
 ## Features
 
@@ -89,7 +89,8 @@ Then open [http://localhost:3000](http://localhost:3000) to complete first-run s
 | PostgreSQL persistence | ✅ | | |
 | Auth with local users + API tokens | ✅ | | |
 | Activity log & audit trail | ✅ | | |
-| Backup & restore | ✅ | | |
+| Configuration export & import | ✅ | | |
+| Web UI | | planned | |
 | DNSSEC | | ✅ | |
 | DoH & DoT upstream support | | ✅ | |
 | Webhook events | | ✅ | |
@@ -101,7 +102,7 @@ Then open [http://localhost:3000](http://localhost:3000) to complete first-run s
 
 ## API
 
-The REST API is the primary interface. Every feature in the UI is accessible through the API.
+The REST API is the primary interface today. Do not assume a working React UI exists in this repository.
 
 ```bash
 # Get system status
@@ -147,14 +148,14 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/api/v1/config/expo
 ## Repo layout
 
 ```
-/cmd/server       — application entrypoint
-/internal         — server internals (not importable)
-/openapi          — OpenAPI 3.1 specification
-/docs             — documentation
-/deploy/docker    — Dockerfile and Compose files
-/scripts          — install.sh and helper scripts
-/examples         — example configurations
-.github/          — CI, templates, issue infrastructure
+/cmd/server       - application entrypoint
+/internal         - server internals (not importable)
+/openapi          - OpenAPI 3.1 specification
+/docs             - documentation
+/deploy/docker    - Dockerfile and Compose files
+/scripts          - install.sh and helper scripts
+/examples         - example configurations
+.github/          - CI, templates, issue infrastructure
 ```
 
 ## Contributing
@@ -165,7 +166,7 @@ All contributors must sign off their commits under the [Developer Certificate of
 
 ## Security
 
-To report a vulnerability, please use [GitHub Security Advisories](https://github.com/openfiltr/openfiltr/security/advisories/new) — **do not open a public issue**.
+To report a vulnerability, please use [GitHub Security Advisories](https://github.com/openfiltr/openfiltr/security/advisories/new). **Do not open a public issue.**
 
 See [SECURITY.md](SECURITY.md) for our full disclosure policy.
 
