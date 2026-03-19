@@ -78,4 +78,14 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/checksums.txt
+            dist/bom.json
           generate_release_notes: true
+
+      - name: Generate SBOM
+        uses: CycloneDX/ghorst@latest
+        with:
+          outputFormat: json
+          outputName: bom.json
+          outputPath: dist/
+          includeDepencyList: true
+          includeSubProjects: true
