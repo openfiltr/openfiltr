@@ -1,3 +1,28 @@
+## Before You Begin Any Task
+
+Complete these steps **before making any code changes**:
+
+1. **Sync with `main`** — fetch and rebase onto the latest default branch:
+   ```bash
+   git fetch origin main
+   git rebase origin/main
+   ```
+
+2. **Read `CHANGELOG.md`** — understand what has recently changed and why.
+
+3. **Read all ADRs in `docs/adr/`** — understand the architectural decisions that have been deliberately made so you do not accidentally reverse them.
+
+4. **Run the test suite** to record the current passing baseline before you touch anything:
+   ```bash
+   go test ./...
+   # or, if Go is not available locally:
+   docker run --rm -v "$PWD":/work -w /work golang:1.24 go test ./...
+   ```
+
+> Skipping any of these steps risks working from stale state, reversing deliberate decisions, or masking pre-existing test failures as regressions you introduced.
+
+---
+
 ## Repository Truth
 
 - This repository is currently a backend-first Go service.
@@ -23,6 +48,7 @@
 - `internal/dns`: DNS request handling and activity logging
 - `deploy/docker`: container image and compose examples
 - `.github/workflows`: CI, release, CodeQL, dependency review
+- `docs/adr/`: Architecture Decision Records (read before starting any task)
 
 ## Storage Notes
 

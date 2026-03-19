@@ -1,3 +1,23 @@
+## Before you begin any task
+
+Complete these steps **before making any code changes**:
+
+1. **Sync with `main`** — fetch and rebase/merge the latest `origin/main` into your working branch.
+
+2. **Read `CHANGELOG.md`** — understand what has recently changed and why. Pay particular attention to entries added after the most recent version tag; they describe in-progress or recently landed work that affects the current codebase state.
+
+3. **Read all ADRs in `docs/adr/`** — these record significant architectural decisions (e.g. "PostgreSQL only", "British English everywhere"). Do not reverse or work around a decision recorded in an ADR without first creating a new ADR that explicitly supersedes it.
+
+4. **Run the test suite** to establish the passing baseline before you write a single line of code:
+   ```bash
+   go test ./...
+   ```
+   If tests already fail on `main`, note which ones so you do not report them as regressions you introduced.
+
+> Skipping any step risks working from stale state, undoing deliberate decisions, or generating misleading test failures.
+
+---
+
 # OpenFiltr - AI Agent Instructions
 
 > These instructions are for AI coding agents (GitHub Copilot, Claude, etc.) working on the OpenFiltr codebase. Read this before making any changes.
