@@ -37,13 +37,25 @@ Existing DNS filtering tools prioritise simplicity over extensibility. OpenFiltr
 
 ## Quick install
 
-### curl (Linux / Raspberry Pi)
+### curl (Linux / macOS)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/openfiltr/openfiltr/main/scripts/install.sh | sh
 ```
 
-The installer detects your OS and architecture, installs a single binary, creates a systemd service, and writes a default config. PostgreSQL must already be running and reachable from the configured `database_url`.
+The installer detects your OS and architecture, installs a single binary, creates a systemd service (Linux) or launchd daemon (macOS), and writes a default config. PostgreSQL must already be running and reachable from the configured `database_url`.
+
+### PowerShell (Windows)
+
+Run the following in an **elevated** PowerShell session:
+
+```powershell
+irm https://raw.githubusercontent.com/openfiltr/openfiltr/main/scripts/install.ps1 | iex
+```
+
+The installer downloads the Windows binary, writes a default config to `%ProgramData%\openfiltr\`, adds the binary to your `PATH`, and registers a Windows service. PostgreSQL must already be running and reachable from the configured `database_url`.
+
+> **Note:** Run PowerShell as Administrator to register the Windows service and write to `%ProgramFiles%`. Pass `-NoRoot` to install to your user profile instead (`%LOCALAPPDATA%\OpenFiltr\`) without requiring elevation.
 
 ### Docker Compose
 
