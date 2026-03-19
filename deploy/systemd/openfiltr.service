@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenFiltr DNS Filtering Service
+Documentation=https://github.com/openfiltr/openfiltr
+After=network.target
+
+[Service]
+Type=simple
+User=openfiltr
+Group=openfiltr
+ExecStart=/usr/local/bin/openfiltr --config /etc/openfiltr/app.yaml
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+ProtectSystem=strict
+PrivateTmp=true
+NoNewPrivileges=true
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
