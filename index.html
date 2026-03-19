@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#f2f2f7">
+  <title>Burokeshoku</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header id="hdr">
+      <button class="icon-btn" id="btn-back" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M13 3L6 10L13 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div id="score-wrap">
+        <div id="score-main">0</div>
+        <div id="score-sub">
+          <span>Today&nbsp;<span id="today-val">0</span></span>
+          <span>🏆&nbsp;<span id="best-val">0</span></span>
+        </div>
+      </div>
+      <button class="icon-btn" id="btn-settings" aria-label="Settings">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="2"/>
+          <path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4.1 4.1l1.4 1.4M14.5 14.5l1.4 1.4M4.1 15.9l1.4-1.4M14.5 5.5l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Main play area -->
+    <main id="main">
+
+      <!-- Board -->
+      <div id="board-wrap">
+        <div id="board"></div>
+      </div>
+
+      <!-- Training panel (hidden by default) -->
+      <div id="training-panel" hidden>
+        <div id="health-row">
+          <span class="metric" id="m-holes">Holes&nbsp;<b>0</b></span>
+          <span class="metric" id="m-lanes">Lanes&nbsp;<b>18</b></span>
+          <span class="metric" id="m-centre">Centre&nbsp;<b>ok</b></span>
+          <span class="metric" id="m-combo">Combo&nbsp;<b>0</b></span>
+        </div>
+        <div id="strategy-note"></div>
+        <div id="move-eval"></div>
+        <div id="train-btns">
+          <button class="pill-btn" id="btn-hint">💡 Hint</button>
+          <button class="pill-btn" id="btn-restart">↺ Restart</button>
+        </div>
+      </div>
+
+      <!-- Piece rack -->
+      <div id="rack">
+        <div class="slot" id="slot-0"></div>
+        <div class="slot" id="slot-1"></div>
+        <div class="slot" id="slot-2"></div>
+      </div>
+
+    </main>
+
+    <!-- Settings overlay -->
+    <div id="ov-settings" class="overlay" hidden>
+      <div class="ov-card">
+        <h2>Settings</h2>
+        <label class="tog-row">
+          <span>Training Mode</span>
+          <span class="tog-wrap">
+            <input type="checkbox" id="chk-training">
+            <span class="tog-track"><span class="tog-thumb"></span></span>
+          </span>
+        </label>
+        <button class="pill-btn wide" id="btn-done">Done</button>
+      </div>
+    </div>
+
+    <!-- Game-over overlay -->
+    <div id="ov-gameover" class="overlay" hidden>
+      <div class="ov-card">
+        <h2>Game Over</h2>
+        <p id="go-score"></p>
+        <p id="go-best"></p>
+        <button class="pill-btn wide" id="btn-new">New Game</button>
+      </div>
+    </div>
+
+  </div><!-- #app -->
+
+  <script src="app.js"></script>
+</body>
+</html>
