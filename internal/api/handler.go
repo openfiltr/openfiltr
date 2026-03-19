@@ -100,6 +100,13 @@ func (h *Handler) AuthMiddleware(next http.Handler) http.Handler {
 				return
 			}
 		}
+		if bearerTokenFromRequest(r) == "" && isStateChanging(r.Method) {
+			csrfCookie, err := r.Cookie(csrfCookieName)
+			if err != nil || csrfCookie.Value == "" || r.Header.Get(csrfHeaderName) == "" || r.Header.Get(csrfHeaderName) != csrfCookie.Value {
+				respondError(w, http.StatusForbidden, "CSRF token required")
+				return
+			}
+		}
 		ctx := context.WithValue(r.Context(), claimsKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
