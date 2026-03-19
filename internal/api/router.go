@@ -20,8 +20,8 @@ func NewRouter(cfg *config.Config, db *sql.DB, version string) http.Handler {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID"},
-		ExposedHeaders:   []string{"Link", "X-Total-Count"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID", csrfHeaderName},
+		ExposedHeaders:   []string{"Link", "X-Total-Count", csrfHeaderName},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
