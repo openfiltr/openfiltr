@@ -18,6 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Stamp cache version into service worker
+        run: |
+          COMMIT=$(git rev-parse --short HEAD)
+          sed -i "s/const CACHE_NAME = 'burokeshoku-v[^']*'/const CACHE_NAME = 'burokeshoku-${COMMIT}'/" sw.js
+
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4.8.0
         with:

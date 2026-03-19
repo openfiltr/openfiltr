@@ -1,39 +1,28 @@
 name: PR Preview
 
-# Privileged deploy job: triggered after the unprivileged "PR Preview Prepare"
-# workflow completes. Downloads the artifact produced there so no untrusted
-# code is checked out with write-permission tokens.
 on:
-  workflow_run:
-    workflows: ["PR Preview Prepare"]
-    types: [completed]
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
 
 permissions:
   contents: write
   pull-requests: write
-  actions: read
 
 concurrency:
-  group: pr-preview-${{ github.event.workflow_run.id }}
+  group: pr-preview-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   preview:
-    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    # Only run for same-repo PRs; fork PRs get a read-only token that cannot
+    # write to gh-pages or post comments.
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-      - name: Download PR preview files
-        uses: actions/download-artifact@v4
+      - name: Checkout PR
+        uses: actions/checkout@v4
         with:
-          name: pr-preview
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Read PR metadata
-        id: pr-info
-        run: |
-          echo "number=$(cat .pr-number)" >> $GITHUB_OUTPUT
-          echo "pr_action=$(cat .pr-action)" >> $GITHUB_OUTPUT
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Deploy PR preview
         uses: rossjrw/pr-preview-action@v1.8.1
@@ -41,7 +30,3 @@ jobs:
           source-dir: .
           preview-branch: gh-pages
           umbrella-dir: pr-preview
-          pr-number: ${{ steps.pr-info.outputs.number }}
-          action: ${{ steps.pr-info.outputs.pr_action == 'closed' && 'remove' || 'deploy' }}
-          deploy-commit-message: "Deploy preview for PR ${{ steps.pr-info.outputs.number }} \U0001F6EB"
-          remove-commit-message: "Remove preview for PR ${{ steps.pr-info.outputs.number }} \U0001F6EC"

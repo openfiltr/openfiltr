@@ -133,8 +133,22 @@
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
+      // Capture whether a SW was already controlling this page before we register.
+      // Used below to distinguish a first-install (no reload needed) from an update.
+      const hadController = !!navigator.serviceWorker.controller;
+
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js');
+      });
+
+      // When a new SW takes over (skipWaiting + clients.claim), reload so the
+      // user immediately sees the fresh assets instead of the stale cached ones.
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (hadController && !refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
       });
     }
   </script>
