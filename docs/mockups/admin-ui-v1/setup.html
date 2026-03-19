@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenFiltr Admin Setup</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23178792'/%3E%3C/svg%3E">
+  <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-of-canvas text-of-ink antialiased">
+  <main class="of-shell mx-auto min-h-screen max-w-auth px-4 py-6 sm:px-6 lg:px-8" data-page="setup">
+    <div class="absolute inset-x-0 top-0 -z-10 h-[26rem] bg-[radial-gradient(circle_at_top_left,_rgba(0,105,255,0.16),_transparent_52%),linear-gradient(180deg,_rgba(237,243,251,0.95)_0%,_rgba(245,248,252,0.45)_55%,_rgba(245,248,252,1)_100%)]"></div>
+    <div class="mx-auto grid max-w-auth gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(18rem,0.92fr)]">
+      <section class="space-y-6">
+        <header class="of-panel rounded-panel border border-of-line bg-white/95 p-6 shadow-panel backdrop-blur sm:p-7">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="of-badge inline-flex rounded-full border border-of-accent/15 bg-of-accentSoft px-3 py-1 text-xs font-semibold uppercase tracking-label text-of-accentStrong">First-run setup</span>
+            <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-medium text-of-muted">Static review flow</span>
+          </div>
+          <div class="mt-5 flex items-start gap-4">
+            <img class="h-auto w-32 shrink-0 sm:w-36" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+            <div class="min-w-0 space-y-3">
+              <p class="text-xs font-semibold uppercase tracking-label text-of-muted">OpenFiltr control plane</p>
+              <h1 class="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl" id="setup-title">Create the first admin account</h1>
+              <p class="max-w-xl text-sm leading-6 text-of-muted sm:text-base">This install does not have an administrator yet. Create the first account, review the completion state, then move into the dashboard slice.</p>
+            </div>
+          </div>
+        </header>
+
+        <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel sm:p-7" aria-labelledby="setup-title">
+          <ol class="of-stepper grid gap-3 sm:grid-cols-2" aria-label="Setup progress">
+            <li class="of-step of-step--active flex min-h-14 items-center gap-3 rounded-control border border-of-accent/20 bg-of-accentSoft px-4 py-3 font-semibold text-of-accentStrong" data-step-number="1" aria-current="step">
+              <span>Create admin account</span>
+            </li>
+            <li class="of-step flex min-h-14 items-center gap-3 rounded-control border border-of-line bg-of-panelMuted px-4 py-3 font-semibold text-of-muted" data-step-number="2" aria-current="false">
+              <span>Setup complete</span>
+            </li>
+          </ol>
+
+          <section class="setup-step mt-6 grid gap-6" data-step="admin-account" data-step-panel="admin-account">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Step 1 of 2</p>
+                <h2 class="of-section-heading mt-2 text-2xl font-semibold tracking-tight text-slate-950">Admin account details</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-of-muted">Keep this account for operational access. The prototype only advances once the inputs are valid.</p>
+              </div>
+              <div class="rounded-[1rem] border border-of-line bg-of-panelMuted px-4 py-3 text-sm text-of-muted">
+                <p class="font-semibold text-slate-900">Security note</p>
+                <p class="mt-1">Passwords still require at least eight characters in this static flow.</p>
+              </div>
+            </div>
+
+            <div class="rounded-control border border-of-danger/20 bg-of-dangerSoft px-4 py-3 text-sm font-medium text-of-danger form-notice form-notice--danger" role="alert" aria-live="polite" data-review-state="validation-error" data-validation-summary hidden>
+              Fix the highlighted fields to continue.
+            </div>
+
+            <form class="grid gap-5" data-setup-form novalidate>
+              <div class="grid gap-5 md:grid-cols-2">
+                <div class="field grid gap-2 md:col-span-2" data-field-wrapper="username">
+                  <label class="text-sm font-semibold text-slate-900 field__label" for="setup-username">Username</label>
+                  <input class="of-input min-h-12 rounded-control border border-of-line bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-of-accent focus:ring-4 focus:ring-of-accent/10" id="setup-username" name="username" type="text" autocomplete="username" spellcheck="false" placeholder="admin">
+                  <p class="field__error text-sm text-of-danger" id="setup-username-error" data-error-for="username" hidden>Enter a username.</p>
+                </div>
+
+                <div class="field grid gap-2" data-field-wrapper="password">
+                  <label class="text-sm font-semibold text-slate-900 field__label" for="setup-password">Password</label>
+                  <input class="of-input min-h-12 rounded-control border border-of-line bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-of-accent focus:ring-4 focus:ring-of-accent/10" id="setup-password" name="password" type="password" autocomplete="new-password" aria-describedby="setup-password-hint setup-password-error" placeholder="Create a password">
+                  <p class="field__hint text-sm text-of-muted" id="setup-password-hint">Minimum eight characters. No other rules are enforced in the prototype.</p>
+                  <p class="field__error text-sm text-of-danger" id="setup-password-error" data-error-for="password" hidden>Enter a password.</p>
+                </div>
+
+                <div class="field grid gap-2" data-field-wrapper="confirmPassword">
+                  <label class="text-sm font-semibold text-slate-900 field__label" for="setup-confirm-password">Confirm password</label>
+                  <input class="of-input min-h-12 rounded-control border border-of-line bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-of-accent focus:ring-4 focus:ring-of-accent/10" id="setup-confirm-password" name="confirm-password" type="password" autocomplete="new-password" aria-describedby="setup-confirm-password-error" placeholder="Repeat the password">
+                  <p class="field__error text-sm text-of-danger" id="setup-confirm-password-error" data-error-for="confirmPassword" hidden>Confirm the password.</p>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-3 border-t border-of-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm leading-6 text-of-muted">Submitting only changes the mock-up state. No credentials are stored.</p>
+                <button class="of-button of-button--primary inline-flex min-h-12 items-center justify-center rounded-control border border-of-accent bg-of-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-of-accentStrong" type="submit">Create admin account</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="setup-step mt-6 grid gap-6" data-step="setup-complete" data-step-panel="setup-complete" hidden>
+            <div class="grid gap-4 rounded-[1.1rem] border border-of-success/20 bg-of-successSoft p-5">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-label text-of-success">Ready to continue</p>
+                  <h2 class="of-section-heading mt-2 text-2xl font-semibold tracking-tight text-slate-950">Setup complete</h2>
+                </div>
+                <span class="of-badge inline-flex rounded-full border border-of-success/20 bg-white px-3 py-1 text-xs font-semibold text-of-success">Admin provisioned</span>
+              </div>
+              <div class="rounded-control border border-of-success/20 bg-white/70 px-4 py-3 text-sm font-medium text-of-success form-notice form-notice--success" role="status" aria-live="polite">
+                Setup complete.
+              </div>
+              <p class="text-sm leading-6 text-of-muted section-copy" data-complete-copy>Continue to the dashboard or import config first.</p>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+              <button class="of-button of-button--secondary inline-flex min-h-12 items-center justify-center rounded-control border border-of-line bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-of-lineStrong hover:bg-of-panelMuted" type="button" data-import-config>Import config</button>
+              <a class="of-button of-button--primary inline-flex min-h-12 items-center justify-center rounded-control border border-of-accent bg-of-accent px-5 py-3 text-sm font-semibold text-white no-underline transition hover:bg-of-accentStrong hover:text-white" href="dashboard.html" data-continue-dashboard>Continue to dashboard</a>
+            </div>
+
+            <div class="rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm text-of-muted form-notice form-notice--muted" aria-live="polite" data-import-stub hidden>
+              Import config is not wired in this prototype. It stays in the setup flow.
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <aside class="space-y-6">
+        <section class="of-panel rounded-panel border border-of-line bg-slate-950 p-6 text-slate-100 shadow-panel sm:p-7">
+          <p class="text-xs font-semibold uppercase tracking-label text-slate-300">What this screen proves</p>
+          <ul class="mt-4 space-y-3 text-sm leading-6 text-slate-200">
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 rounded-full bg-of-accent"></span>
+              <span>The product shell and controls already match the login and dashboard surfaces.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 rounded-full bg-of-success"></span>
+              <span>The completion step stays in-flow instead of dumping the reviewer into a disconnected success card.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 rounded-full bg-of-warning"></span>
+              <span>`?state=validation-error` still exposes the review state immediately.</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+          <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Next screens</p>
+          <div class="mt-4 grid gap-3">
+            <a class="of-button of-button--ghost inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-white" href="login.html">
+              <span>Review login</span>
+              <span class="text-xs uppercase tracking-label text-of-muted">Auth</span>
+            </a>
+            <a class="of-button of-button--ghost inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-white" href="index.html">
+              <span>Back to launcher</span>
+              <span class="text-xs uppercase tracking-label text-of-muted">Index</span>
+            </a>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script src="prototype.js"></script>
+  <script>
+    (function () {
+      const prototype = window.OpenFiltrPrototype;
+      if (!prototype) {
+        return;
+      }
+
+      prototype.bootPage(({ state, setHidden, setReviewStateClass }) => {
+        const root = document.querySelector('[data-page="setup"]');
+        const stepOne = root.querySelector('[data-step-panel="admin-account"]');
+        const stepTwo = root.querySelector('[data-step-panel="setup-complete"]');
+        const stepperItems = root.querySelectorAll('[data-step-number]');
+        const form = root.querySelector('[data-setup-form]');
+        const summary = root.querySelector('[data-validation-summary]');
+        const completeCopy = root.querySelector('[data-complete-copy]');
+        const importButton = root.querySelector('[data-import-config]');
+        const importStub = root.querySelector('[data-import-stub]');
+        const fields = {
+          username: root.querySelector('[name="username"]'),
+          password: root.querySelector('[name="password"]'),
+          confirmPassword: root.querySelector('[name="confirm-password"]'),
+        };
+        const wrappers = {
+          username: root.querySelector('[data-field-wrapper="username"]'),
+          password: root.querySelector('[data-field-wrapper="password"]'),
+          confirmPassword: root.querySelector('[data-field-wrapper="confirmPassword"]'),
+        };
+        const errors = {
+          username: root.querySelector('[data-error-for="username"]'),
+          password: root.querySelector('[data-error-for="password"]'),
+          confirmPassword: root.querySelector('[data-error-for="confirmPassword"]'),
+        };
+
+        const invalidSeed = {
+          username: '',
+          password: 'short1',
+          confirmPassword: 'short2',
+        };
+
+        function setStep(activeStep) {
+          const isComplete = activeStep === 'setup-complete';
+          prototype.toggleClass(stepperItems[0], 'of-step--active', !isComplete);
+          prototype.toggleClass(stepperItems[0], 'border-of-accent/20', !isComplete);
+          prototype.toggleClass(stepperItems[0], 'bg-of-accentSoft', !isComplete);
+          prototype.toggleClass(stepperItems[0], 'text-of-accentStrong', !isComplete);
+          prototype.toggleClass(stepperItems[0], 'border-of-line', isComplete);
+          prototype.toggleClass(stepperItems[0], 'bg-of-panelMuted', isComplete);
+          prototype.toggleClass(stepperItems[0], 'text-of-muted', isComplete);
+
+          prototype.toggleClass(stepperItems[1], 'of-step--active', isComplete);
+          prototype.toggleClass(stepperItems[1], 'border-of-accent/20', isComplete);
+          prototype.toggleClass(stepperItems[1], 'bg-of-accentSoft', isComplete);
+          prototype.toggleClass(stepperItems[1], 'text-of-accentStrong', isComplete);
+          prototype.toggleClass(stepperItems[1], 'border-of-line', !isComplete);
+          prototype.toggleClass(stepperItems[1], 'bg-of-panelMuted', !isComplete);
+          prototype.toggleClass(stepperItems[1], 'text-of-muted', !isComplete);
+
+          stepperItems[0].setAttribute('aria-current', !isComplete ? 'step' : 'false');
+          stepperItems[1].setAttribute('aria-current', isComplete ? 'step' : 'false');
+          setHidden(stepOne, isComplete);
+          setHidden(stepTwo, !isComplete);
+        }
+
+        function setFieldState(name, message, invalid) {
+          const wrapper = wrappers[name];
+          const error = errors[name];
+          const input = fields[name];
+
+          prototype.toggleClass(wrapper, 'field--invalid', invalid);
+          prototype.toggleClass(input, 'border-of-danger', invalid);
+          prototype.toggleClass(input, 'focus:border-of-danger', invalid);
+          prototype.toggleClass(input, 'focus:ring-of-danger/10', invalid);
+          error.textContent = message;
+          setHidden(error, !invalid);
+          input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+        }
+
+        function validateSetup() {
+          const result = prototype.validateSetupFields({
+            username: fields.username.value,
+            password: fields.password.value,
+            confirmPassword: fields.confirmPassword.value,
+          });
+
+          setFieldState('username', result.errors.username, Boolean(result.errors.username));
+          setFieldState('password', result.errors.password, Boolean(result.errors.password));
+          setFieldState('confirmPassword', result.errors.confirmPassword, Boolean(result.errors.confirmPassword));
+
+          summary.textContent = result.summary;
+          setHidden(summary, result.isValid);
+
+          return result.isValid;
+        }
+
+        function showCompleteStep() {
+          const username = fields.username.value.trim();
+          completeCopy.textContent = username
+            ? `Admin account ${username} is ready. Continue to the dashboard or import config first.`
+            : 'Admin account is ready. Continue to the dashboard or import config first.';
+          setReviewStateClass(root, 'default');
+          setHidden(importStub, true);
+          setStep('setup-complete');
+        }
+
+        if (state === 'validation-error') {
+          fields.username.value = invalidSeed.username;
+          fields.password.value = invalidSeed.password;
+          fields.confirmPassword.value = invalidSeed.confirmPassword;
+          setReviewStateClass(root, state);
+          setStep('admin-account');
+          validateSetup();
+        } else {
+          setReviewStateClass(root, 'default');
+          setStep('admin-account');
+          setHidden(summary, true);
+        }
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (validateSetup()) {
+            showCompleteStep();
+          }
+        });
+
+        [fields.username, fields.password, fields.confirmPassword].forEach((input) => {
+          input.addEventListener('input', () => {
+            if (!stepTwo.hidden) {
+              return;
+            }
+
+            if (!summary.hidden) {
+              validateSetup();
+            }
+          });
+        });
+
+        importButton.addEventListener('click', () => {
+          setHidden(importStub, false);
+        });
+      });
+    }());
+  </script>
+</body>
+</html>

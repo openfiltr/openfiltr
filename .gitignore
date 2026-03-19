@@ -33,6 +33,7 @@ secrets.env
 .vscode/
 *.swp
 *.swo
+.playwright-cli/
 
 # OS
 .DS_Store

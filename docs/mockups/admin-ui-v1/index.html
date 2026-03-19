@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenFiltr Admin UI Review Launcher</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23178792'/%3E%3C/svg%3E">
+  <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-of-canvas text-of-ink antialiased">
+  <main class="of-shell mx-auto min-h-screen max-w-shell px-4 py-6 sm:px-6 lg:px-8">
+    <div class="absolute inset-x-0 top-0 -z-10 h-80 bg-gradient-to-b from-of-accentSoft via-of-canvasSoft to-transparent"></div>
+    <div class="mx-auto flex max-w-6xl flex-col gap-6">
+      <section class="of-panel overflow-hidden rounded-panel border border-of-line bg-white/95 shadow-panel backdrop-blur">
+        <div class="grid gap-8 px-6 py-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.8fr)] lg:px-8 lg:py-8">
+          <div class="space-y-5">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="of-badge inline-flex items-center rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-semibold uppercase tracking-label text-of-muted">Internal review</span>
+              <span class="of-badge inline-flex items-center rounded-full border border-of-accent/15 bg-of-accentSoft px-3 py-1 text-xs font-semibold uppercase tracking-label text-of-accentStrong">Static prototype only</span>
+            </div>
+            <div class="flex items-start gap-4">
+              <img class="h-auto w-36 shrink-0 sm:w-44" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+              <div class="min-w-0 space-y-3">
+                <p class="text-xs font-semibold uppercase tracking-label text-of-accentStrong">Admin UI v1</p>
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Review the refreshed OpenFiltr control plane</h1>
+                <p class="max-w-2xl text-sm leading-6 text-of-muted sm:text-base">Use this page to move through setup, login, and dashboard in order, or jump straight to the seeded review states.</p>
+              </div>
+            </div>
+          </div>
+
+          <aside class="rounded-[1.25rem] border border-of-line bg-of-panelMuted/80 p-5">
+            <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Review frame</p>
+            <ul class="mt-4 space-y-3 text-sm leading-6 text-of-muted">
+              <li class="flex gap-3">
+                <span class="mt-1 h-2 w-2 rounded-full bg-of-success"></span>
+                <span>Shared primitives stay consistent across setup, auth, and dashboard.</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-2 w-2 rounded-full bg-of-accent"></span>
+                <span>Design direction is calm, operational, and reviewable rather than decorative.</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-2 w-2 rounded-full bg-of-warning"></span>
+                <span>All pages remain static mock-ups. Buttons only drive the existing prototype states.</span>
+              </li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <section class="grid gap-6 lg:grid-cols-2" aria-label="Prototype pages">
+        <article class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Primary flow</p>
+              <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-slate-950">Core screens</h2>
+              <p class="mt-2 max-w-xl text-sm leading-6 text-of-muted">Walk the happy path from first-run setup into login and then the control-plane dashboard.</p>
+            </div>
+            <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-medium text-of-muted">Three pages</span>
+          </div>
+          <div class="mt-6 grid gap-3">
+            <a class="of-button of-button--primary inline-flex min-h-11 items-center justify-between rounded-control border border-of-accent bg-of-accent px-4 py-3 text-sm font-semibold text-white no-underline transition hover:bg-of-accentStrong hover:text-white" href="setup.html">
+              <span>Open setup</span>
+              <span class="text-xs font-medium uppercase tracking-label text-white/80">Step 1</span>
+            </a>
+            <a class="of-button of-button--secondary inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-white px-4 py-3 text-sm font-semibold text-slate-900 no-underline transition hover:border-of-lineStrong hover:bg-of-panelMuted" href="login.html">
+              <span>Open login</span>
+              <span class="text-xs font-medium uppercase tracking-label text-of-muted">Step 2</span>
+            </a>
+            <a class="of-button of-button--secondary inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-white px-4 py-3 text-sm font-semibold text-slate-900 no-underline transition hover:border-of-lineStrong hover:bg-of-panelMuted" href="dashboard.html">
+              <span>Open dashboard</span>
+              <span class="text-xs font-medium uppercase tracking-label text-of-muted">Step 3</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Review states</p>
+              <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-slate-950">Direct critique links</h2>
+              <p class="mt-2 max-w-xl text-sm leading-6 text-of-muted">Jump straight to the seeded validation and sparse-data states without changing the underlying prototype behaviour.</p>
+            </div>
+            <span class="of-badge inline-flex rounded-full border border-of-warning/20 bg-of-warningSoft px-3 py-1 text-xs font-medium text-of-warning">Stateful</span>
+          </div>
+          <div class="mt-6 grid gap-3">
+            <a class="of-button of-button--ghost inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-white" href="setup.html?state=validation-error">
+              <span>Setup validation error</span>
+              <span class="text-xs font-medium uppercase tracking-label text-of-muted">Query state</span>
+            </a>
+            <a class="of-button of-button--ghost inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-white" href="login.html?state=error">
+              <span>Login error</span>
+              <span class="text-xs font-medium uppercase tracking-label text-of-muted">Query state</span>
+            </a>
+            <a class="of-button of-button--ghost inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-white" href="dashboard.html?state=low-data">
+              <span>Dashboard low data</span>
+              <span class="text-xs font-medium uppercase tracking-label text-of-muted">Query state</span>
+            </a>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

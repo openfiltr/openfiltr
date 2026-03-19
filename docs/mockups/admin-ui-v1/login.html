@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenFiltr Admin Login</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23178792'/%3E%3C/svg%3E">
+  <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-of-canvas text-of-ink antialiased">
+  <main class="of-shell mx-auto min-h-screen max-w-auth px-4 py-6 sm:px-6 lg:px-8" data-page="login">
+    <div class="absolute inset-x-0 top-0 -z-10 h-[24rem] bg-[radial-gradient(circle_at_top_right,_rgba(0,105,255,0.14),_transparent_48%),linear-gradient(180deg,_rgba(237,243,251,0.92)_0%,_rgba(245,248,252,0.38)_58%,_rgba(245,248,252,1)_100%)]"></div>
+    <div class="mx-auto grid max-w-auth gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(18rem,1.05fr)]">
+      <aside class="of-panel rounded-panel border border-of-line bg-slate-950 p-6 text-slate-100 shadow-panel sm:p-7 lg:order-2">
+        <div class="flex items-center gap-3">
+          <span class="of-badge inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-label text-slate-200">Admin access</span>
+          <span class="of-badge inline-flex rounded-full border border-of-accent/20 bg-of-accent/15 px-3 py-1 text-xs font-medium text-blue-100">Review shell</span>
+        </div>
+        <img class="mt-6 h-auto w-36 sm:w-40" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+        <div class="mt-6 space-y-4">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-label text-slate-300">OpenFiltr control plane</p>
+            <h1 class="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl" id="login-title">Sign in to continue</h1>
+            <p class="mt-3 text-sm leading-6 text-slate-300 sm:text-base">Use the administrator created during setup. This slice stays quiet on purpose: one path in, one error state, and a direct hand-off into the dashboard.</p>
+          </div>
+          <div class="grid gap-3 rounded-[1.1rem] border border-white/10 bg-white/5 p-4 text-sm leading-6 text-slate-300">
+            <p><span class="font-semibold text-white">Expected reviewer path:</span> setup, login, dashboard.</p>
+            <p><span class="font-semibold text-white">State override:</span> append <code class="of-inline-code">?state=error</code> to seed a failed sign-in.</p>
+          </div>
+        </div>
+      </aside>
+
+      <section class="of-panel rounded-panel border border-of-line bg-white/95 p-6 shadow-panel backdrop-blur sm:p-7 lg:order-1" aria-labelledby="login-title">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-semibold uppercase tracking-label text-of-muted">Authentication</span>
+          <a class="of-button of-button--ghost inline-flex min-h-10 items-center justify-center rounded-control border border-of-line bg-of-panelMuted px-4 py-2 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-white" href="index.html">Back to launcher</a>
+        </div>
+
+        <div class="mt-6 space-y-2">
+          <h2 class="of-section-heading text-2xl font-semibold tracking-tight text-slate-950">Admin sign-in</h2>
+          <p class="text-sm leading-6 text-of-muted">A valid sign-in goes straight to the dashboard. There is no multi-factor or recovery flow in this static slice.</p>
+        </div>
+
+        <div class="mt-6 rounded-control border border-of-danger/20 bg-of-dangerSoft px-4 py-3 text-sm font-medium text-of-danger form-notice form-notice--danger" role="alert" aria-live="polite" data-review-state="error" data-login-error hidden>
+          Invalid credentials. Check the username and password, then try again.
+        </div>
+
+        <form class="mt-6 grid gap-5" data-login-form data-success-target="dashboard.html" novalidate>
+          <div class="field grid gap-2">
+            <label class="text-sm font-semibold text-slate-900 field__label" for="login-username">Username</label>
+            <input class="of-input min-h-12 rounded-control border border-of-line bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-of-accent focus:ring-4 focus:ring-of-accent/10" id="login-username" name="username" type="text" autocomplete="username" spellcheck="false" placeholder="admin">
+          </div>
+
+          <div class="field grid gap-2">
+            <label class="text-sm font-semibold text-slate-900 field__label" for="login-password">Password</label>
+            <input class="of-input min-h-12 rounded-control border border-of-line bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-of-accent focus:ring-4 focus:ring-of-accent/10" id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password">
+          </div>
+
+          <div class="flex flex-col gap-3 border-t border-of-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm leading-6 text-of-muted">The mock-up only checks that both fields are present unless the seeded error state is active.</p>
+            <button class="of-button of-button--primary inline-flex min-h-12 items-center justify-center rounded-control border border-of-accent bg-of-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-of-accentStrong" type="submit">Sign in</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script src="prototype.js"></script>
+  <script>
+    (function () {
+      const prototype = window.OpenFiltrPrototype;
+      if (!prototype) {
+        return;
+      }
+
+      prototype.bootPage(({ state, setHidden, setReviewStateClass }) => {
+        const root = document.querySelector('[data-page="login"]');
+        const form = root.querySelector('[data-login-form]');
+        const errorNotice = root.querySelector('[data-login-error]');
+        const username = root.querySelector('[name="username"]');
+        const password = root.querySelector('[name="password"]');
+        const successTarget = form.getAttribute('data-success-target');
+        let forceError = state === 'error';
+
+        function showError() {
+          setReviewStateClass(root, 'error');
+          setHidden(errorNotice, false);
+          prototype.toggleClass(username, 'border-of-danger', true);
+          prototype.toggleClass(password, 'border-of-danger', true);
+        }
+
+        function clearError() {
+          setReviewStateClass(root, 'default');
+          setHidden(errorNotice, true);
+          prototype.toggleClass(username, 'border-of-danger', false);
+          prototype.toggleClass(password, 'border-of-danger', false);
+        }
+
+        if (forceError) {
+          username.value = 'admin';
+          password.value = 'incorrect-password';
+          showError();
+        } else {
+          clearError();
+        }
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          const attempt = prototype.resolveLoginAttempt({
+            forceError,
+            username: username.value,
+            password: password.value,
+          });
+
+          if (attempt.status === 'error') {
+            showError();
+            return;
+          }
+
+          window.location.href = successTarget;
+        });
+
+        [username, password].forEach((field) => {
+          field.addEventListener('input', () => {
+            forceError = false;
+            if (!errorNotice.hidden) {
+              clearError();
+            }
+          });
+        });
+      });
+    }());
+  </script>
+</body>
+</html>

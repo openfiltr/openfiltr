@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenFiltr Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23178792'/%3E%3C/svg%3E">
+  <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-of-canvas text-of-ink antialiased">
+  <main class="of-shell mx-auto min-h-screen max-w-shell px-4 py-4 sm:px-6 lg:px-8" data-page="dashboard">
+    <div class="absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(circle_at_top_left,_rgba(0,105,255,0.14),_transparent_45%),linear-gradient(180deg,_rgba(237,243,251,0.95)_0%,_rgba(245,248,252,0.45)_58%,_rgba(245,248,252,1)_100%)]"></div>
+
+    <header class="of-topbar sticky top-4 z-10 mb-5 rounded-[1.35rem] border border-white/70 bg-white/90 shadow-topbar backdrop-blur">
+      <div class="flex flex-col gap-4 px-4 py-4 sm:px-5 lg:px-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div class="flex min-w-0 items-start gap-3">
+            <img class="h-auto w-20 shrink-0 sm:w-24" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-label text-of-accentStrong">OpenFiltr control plane</p>
+            <h1 class="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl" data-dashboard-title>OpenFiltr is running</h1>
+            <p class="mt-1 text-sm text-of-muted" data-dashboard-copy>HTTP API and DNS are both healthy.</p>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-of-muted" data-dashboard-summary>Current control-plane summary.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-medium text-of-muted" data-dashboard-environment>Production</span>
+          <span class="of-badge inline-flex rounded-full border border-of-accent/15 bg-of-accentSoft px-3 py-1 text-xs font-semibold text-of-accentStrong" data-dashboard-state-badge>Normal sample</span>
+          <a class="of-button of-button--ghost inline-flex min-h-10 items-center justify-center rounded-control border border-of-line bg-white px-4 py-2 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-of-panelMuted" href="index.html">Back to launcher</a>
+        </div>
+      </div>
+
+        <div class="grid gap-3 border-t border-of-line pt-4 sm:grid-cols-3">
+          <div class="rounded-control border border-of-line bg-of-panelMuted px-4 py-3">
+            <p class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Region</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900" data-dashboard-region>LON1</p>
+          </div>
+          <div class="rounded-control border border-of-line bg-of-panelMuted px-4 py-3">
+            <p class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Resolver fleet</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900" data-dashboard-resolver-fleet>3 nodes</p>
+          </div>
+          <div class="rounded-control border border-of-line bg-of-panelMuted px-4 py-3">
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Policy version</span>
+              <span class="text-sm font-semibold text-slate-900" data-dashboard-policy-version>Policy set</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between gap-3">
+              <span class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Last sync</span>
+              <span class="text-sm font-semibold text-slate-900" data-dashboard-last-sync>Moments ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.92fr)]">
+      <section class="grid gap-5">
+        <section class="grid gap-5 lg:grid-cols-2">
+          <article class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel" data-dashboard-section="service-health">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Service health</p>
+                <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-slate-950">Core services</h2>
+              </div>
+              <span class="text-xs font-semibold uppercase tracking-label text-of-muted">Immediate state</span>
+            </div>
+
+            <div class="mt-5 grid gap-3">
+              <div class="rounded-control border border-of-line bg-of-panelMuted p-4">
+                <div class="flex items-center justify-between gap-4">
+                  <span class="text-sm font-medium text-of-muted">Platform state</span>
+                  <span class="status status--success text-sm font-semibold" data-health-service>Running</span>
+                </div>
+              </div>
+              <div class="rounded-control border border-of-line bg-of-panelMuted p-4">
+                <div class="flex items-center justify-between gap-4">
+                  <span class="text-sm font-medium text-of-muted">HTTP / API</span>
+                  <span class="text-sm font-semibold text-slate-900" data-health-http>Healthy</span>
+                </div>
+              </div>
+              <div class="rounded-control border border-of-line bg-of-panelMuted p-4">
+                <div class="flex items-center justify-between gap-4">
+                  <span class="text-sm font-medium text-of-muted">DNS service</span>
+                  <span class="text-sm font-semibold text-slate-900" data-health-dns>Healthy</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel" data-dashboard-section="key-stats">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Immediate health and stats</p>
+                <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-slate-950">Traffic at a glance</h2>
+              </div>
+              <span class="text-xs font-semibold uppercase tracking-label text-of-muted">Rolling window</span>
+            </div>
+
+            <dl class="mt-5 grid gap-3 sm:grid-cols-2">
+              <div class="of-kpi rounded-control border border-of-line bg-of-panelMuted p-4" data-ui="metric-tile">
+                <dt class="text-xs font-semibold uppercase tracking-label text-of-muted">Total requests</dt>
+                <dd class="mt-2 text-2xl font-semibold tracking-tight text-slate-950" data-stat-total-requests>0</dd>
+              </div>
+              <div class="of-kpi rounded-control border border-of-line bg-of-panelMuted p-4" data-ui="metric-tile">
+                <dt class="text-xs font-semibold uppercase tracking-label text-of-muted">Blocked requests</dt>
+                <dd class="mt-2 text-2xl font-semibold tracking-tight text-slate-950" data-stat-blocked-requests>0</dd>
+              </div>
+              <div class="of-kpi rounded-control border border-of-line bg-of-panelMuted p-4" data-ui="metric-tile">
+                <dt class="text-xs font-semibold uppercase tracking-label text-of-muted">Allowed requests</dt>
+                <dd class="mt-2 text-2xl font-semibold tracking-tight text-slate-950" data-stat-allowed-requests>0</dd>
+              </div>
+              <div class="of-kpi rounded-control border border-of-line bg-of-panelMuted p-4" data-ui="metric-tile">
+                <dt class="text-xs font-semibold uppercase tracking-label text-of-muted">Block rate</dt>
+                <dd class="mt-2 text-2xl font-semibold tracking-tight text-slate-950" data-stat-block-rate>0%</dd>
+              </div>
+            </dl>
+          </article>
+        </section>
+
+        <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel" data-dashboard-section="recent-activity" id="recent-activity">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Operational recent activity</p>
+              <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-slate-950">Recent activity</h2>
+              <p class="mt-2 text-sm leading-6 text-of-muted">Newest events first, with a restrained operational readout.</p>
+            </div>
+            <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-medium text-of-muted">Live sample</span>
+          </div>
+
+          <div class="mt-5 rounded-[1rem] border border-dashed border-of-lineStrong bg-of-panelMuted p-5 text-sm text-of-muted dashboard-empty" data-empty-state="recent-activity" data-review-state="low-data" hidden>
+            <p class="font-semibold text-slate-900 dashboard-empty__title">Nothing to show yet.</p>
+            <p class="mt-1 dashboard-empty__copy" data-empty-copy="recent-activity"></p>
+          </div>
+
+          <template data-list-row-template>
+            <li class="of-list-row"></li>
+          </template>
+
+          <ul class="mt-5 grid gap-3" data-activity-list aria-label="Recent requests"></ul>
+        </section>
+      </section>
+
+      <aside class="grid gap-6">
+        <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel" data-dashboard-section="top-blocked-domains" id="top-blocked-domains">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Policy impact</p>
+              <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-slate-950">Top blocked domains</h2>
+              <p class="mt-2 text-sm leading-6 text-of-muted">The busiest blocked destinations, shown as a compact operational panel.</p>
+            </div>
+            <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-medium text-of-muted">Current sample</span>
+          </div>
+
+          <div class="mt-5 rounded-[1rem] border border-dashed border-of-lineStrong bg-of-panelMuted p-5 text-sm text-of-muted dashboard-empty" data-empty-state="top-blocked-domains" data-review-state="low-data" hidden>
+            <p class="font-semibold text-slate-900 dashboard-empty__title">Blocked domains will appear here later.</p>
+            <p class="mt-1 dashboard-empty__copy" data-empty-copy="top-blocked-domains"></p>
+          </div>
+
+          <ul class="mt-5 grid gap-3" data-blocked-list aria-label="Top blocked domains"></ul>
+        </section>
+
+        <section class="of-panel rounded-panel border border-of-line bg-slate-950 p-6 text-slate-100 shadow-panel">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-label text-slate-300">Quick actions</p>
+              <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-white">Review-only shortcuts</h2>
+              <p class="mt-2 text-sm leading-6 text-slate-300">Deliberately shallow actions. They acknowledge the shell without pretending the rest of the product exists.</p>
+            </div>
+          </div>
+
+          <div class="mt-5 grid gap-3">
+            <button class="of-button of-button--secondary inline-flex min-h-11 items-center justify-between rounded-control border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/10 dashboard-action" type="button" data-action="import-config">
+              <span>Import config</span>
+              <span class="text-xs uppercase tracking-label text-slate-400">Stub</span>
+            </button>
+            <button class="of-button of-button--secondary inline-flex min-h-11 items-center justify-between rounded-control border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/10 dashboard-action" type="button" data-action="view-activity">
+              <span>View activity</span>
+              <span class="text-xs uppercase tracking-label text-slate-400">Scroll</span>
+            </button>
+            <button class="of-button of-button--secondary inline-flex min-h-11 items-center justify-between rounded-control border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/10 dashboard-action" type="button" data-action="manage-rules">
+              <span>Manage rules</span>
+              <span class="text-xs uppercase tracking-label text-slate-400">Stub</span>
+            </button>
+          </div>
+
+          <p class="mt-4 rounded-control border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-slate-300" data-action-note hidden></p>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script src="prototype.js"></script>
+  <script src="mock-data.js"></script>
+  <script>
+    (function () {
+      const prototype = window.OpenFiltrPrototype;
+      const data = window.OpenFiltrMockData;
+      if (!prototype || !data) {
+        return;
+      }
+
+      prototype.bootPage(({ state, setHidden, setReviewStateClass }) => {
+        const root = document.querySelector('[data-page="dashboard"]');
+        const dashboard = prototype.resolveDashboardData(state);
+        const title = root.querySelector('[data-dashboard-title]');
+        const copy = root.querySelector('[data-dashboard-copy]');
+        const badge = root.querySelector('[data-dashboard-state-badge]');
+        const environment = root.querySelector('[data-dashboard-environment]');
+        const region = root.querySelector('[data-dashboard-region]');
+        const summary = root.querySelector('[data-dashboard-summary]');
+        const resolverFleet = root.querySelector('[data-dashboard-resolver-fleet]');
+        const policyVersion = root.querySelector('[data-dashboard-policy-version]');
+        const lastSync = root.querySelector('[data-dashboard-last-sync]');
+        const healthService = root.querySelector('[data-health-service]');
+        const healthHttp = root.querySelector('[data-health-http]');
+        const healthDns = root.querySelector('[data-health-dns]');
+        const statTotalRequests = root.querySelector('[data-stat-total-requests]');
+        const statBlockedRequests = root.querySelector('[data-stat-blocked-requests]');
+        const statAllowedRequests = root.querySelector('[data-stat-allowed-requests]');
+        const statBlockRate = root.querySelector('[data-stat-block-rate]');
+        const activityList = root.querySelector('[data-activity-list]');
+        const blockedList = root.querySelector('[data-blocked-list]');
+        const activityEmpty = root.querySelector('[data-empty-state="recent-activity"]');
+        const blockedEmpty = root.querySelector('[data-empty-state="top-blocked-domains"]');
+        const activityEmptyCopy = root.querySelector('[data-empty-copy="recent-activity"]');
+        const blockedEmptyCopy = root.querySelector('[data-empty-copy="top-blocked-domains"]');
+        const actionNote = root.querySelector('[data-action-note]');
+        const actionButtons = root.querySelectorAll('[data-action]');
+        const recentActivitySection = root.querySelector('[data-dashboard-section="recent-activity"]');
+
+        function formatCount(count) {
+          return new Intl.NumberFormat('en-GB').format(count);
+        }
+
+        function renderStatContent() {
+          title.textContent = dashboard.hero.title;
+          copy.textContent = dashboard.hero.copy;
+          badge.textContent = dashboard.hero.stateBadge;
+          environment.textContent = dashboard.environment.name;
+          region.textContent = dashboard.environment.region;
+          summary.textContent = dashboard.environment.summary;
+          resolverFleet.textContent = dashboard.environment.resolverFleet;
+          policyVersion.textContent = dashboard.environment.policyVersion;
+          lastSync.textContent = dashboard.environment.lastSync;
+
+          healthService.textContent = dashboard.health.service;
+          healthHttp.textContent = dashboard.health.http;
+          healthDns.textContent = dashboard.health.dns;
+
+          statTotalRequests.textContent = formatCount(dashboard.stats.totalRequests);
+          statBlockedRequests.textContent = formatCount(dashboard.stats.blockedRequests);
+          statAllowedRequests.textContent = formatCount(dashboard.stats.allowedRequests);
+          statBlockRate.textContent = dashboard.stats.blockRate;
+        }
+
+        function renderRecentActivity() {
+          activityList.innerHTML = '';
+          if (dashboard.recentActivity.length === 0) {
+            activityEmptyCopy.textContent = dashboard.emptyState.recentActivity;
+            setHidden(activityEmpty, false);
+            setHidden(activityList, true);
+            return;
+          }
+
+          setHidden(activityEmpty, true);
+          setHidden(activityList, false);
+
+          dashboard.recentActivity.forEach((item) => {
+            const row = document.createElement('li');
+            row.className = 'of-list-row';
+
+            const main = document.createElement('div');
+            main.className = 'of-list-row__main';
+
+            const titleNode = document.createElement('p');
+            titleNode.className = 'of-list-title';
+            titleNode.textContent = item.domain;
+
+            const metaNode = document.createElement('p');
+            metaNode.className = 'of-list-meta';
+            metaNode.textContent = `${item.client} • ${item.category}`;
+
+            main.appendChild(titleNode);
+            main.appendChild(metaNode);
+
+            const side = document.createElement('div');
+            side.className = 'of-list-row__side';
+
+            const badgeNode = document.createElement('span');
+            badgeNode.className = prototype.getBadgeClassName(item.actionTone);
+            badgeNode.textContent = item.action;
+
+            const detailNode = document.createElement('p');
+            detailNode.className = 'of-list-meta';
+            detailNode.textContent = `${item.time} • ${item.rule}`;
+
+            side.appendChild(badgeNode);
+            side.appendChild(detailNode);
+
+            row.appendChild(main);
+            row.appendChild(side);
+            activityList.appendChild(row);
+          });
+        }
+
+        function renderBlockedDomains() {
+          blockedList.innerHTML = '';
+          if (dashboard.topBlockedDomains.length === 0) {
+            blockedEmptyCopy.textContent = dashboard.emptyState.topBlockedDomains;
+            setHidden(blockedEmpty, false);
+            setHidden(blockedList, true);
+            return;
+          }
+
+          setHidden(blockedEmpty, true);
+          setHidden(blockedList, false);
+
+          dashboard.topBlockedDomains.forEach((item) => {
+            const row = document.createElement('li');
+            row.className = 'of-list-row';
+
+            const main = document.createElement('div');
+            main.className = 'of-list-row__main';
+
+            const titleNode = document.createElement('p');
+            titleNode.className = 'of-list-title';
+            titleNode.textContent = item.domain;
+
+            const metaNode = document.createElement('p');
+            metaNode.className = 'of-list-meta';
+            metaNode.textContent = item.detail;
+
+            main.appendChild(titleNode);
+            main.appendChild(metaNode);
+
+            const side = document.createElement('div');
+            side.className = 'of-list-row__side';
+
+            const countNode = document.createElement('p');
+            countNode.className = 'of-list-value';
+            countNode.textContent = formatCount(item.count);
+
+            const trendNode = document.createElement('p');
+            trendNode.className = 'of-list-meta';
+            trendNode.textContent = item.trend;
+
+            side.appendChild(countNode);
+            side.appendChild(trendNode);
+
+            row.appendChild(main);
+            row.appendChild(side);
+            blockedList.appendChild(row);
+          });
+        }
+
+        function showActionNote(message) {
+          actionNote.textContent = message;
+          setHidden(actionNote, false);
+        }
+
+        renderStatContent();
+        renderRecentActivity();
+        renderBlockedDomains();
+        setReviewStateClass(root, state);
+
+        actionButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const action = button.getAttribute('data-action');
+            if (action === 'import-config') {
+              showActionNote('Import config remains a setup-flow stub in this prototype.');
+              return;
+            }
+
+            if (action === 'view-activity') {
+              recentActivitySection.scrollIntoView({ block: 'start' });
+              showActionNote('Viewing activity stays within the dashboard mock-up.');
+              return;
+            }
+
+            showActionNote('Rules are not modelled in this slice.');
+          });
+        });
+      });
+    }());
+  </script>
+</body>
+</html>
