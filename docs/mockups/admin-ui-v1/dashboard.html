@@ -13,45 +13,55 @@
   <main class="of-shell mx-auto min-h-screen max-w-shell px-4 py-4 sm:px-6 lg:px-8" data-page="dashboard">
     <div class="absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(circle_at_top_left,_rgba(0,105,255,0.14),_transparent_45%),linear-gradient(180deg,_rgba(237,243,251,0.95)_0%,_rgba(245,248,252,0.45)_58%,_rgba(245,248,252,1)_100%)]"></div>
 
-    <header class="of-topbar sticky top-4 z-10 mb-5 rounded-[1.35rem] border border-white/70 bg-white/90 shadow-topbar backdrop-blur">
-      <div class="flex flex-col gap-4 px-4 py-4 sm:px-5 lg:px-6">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div class="flex min-w-0 items-start gap-3">
-            <img class="h-auto w-20 shrink-0 sm:w-24" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+    <header class="of-topbar sticky top-4 z-10 mb-5 rounded-[1.2rem] border border-white/70 bg-white/90 shadow-topbar backdrop-blur">
+      <div class="grid gap-4 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:px-6">
+        <div class="flex min-w-0 items-start gap-4">
+          <img class="h-auto w-16 shrink-0 sm:w-20" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
           <div class="min-w-0">
             <p class="text-xs font-semibold uppercase tracking-label text-of-accentStrong">OpenFiltr control plane</p>
-            <h1 class="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl" data-dashboard-title>OpenFiltr is running</h1>
+            <h1 class="mt-1 text-xl font-semibold tracking-tight text-slate-950 sm:text-[1.7rem]" data-dashboard-title>OpenFiltr is running</h1>
             <p class="mt-1 text-sm text-of-muted" data-dashboard-copy>HTTP API and DNS are both healthy.</p>
             <p class="mt-2 max-w-2xl text-sm leading-6 text-of-muted" data-dashboard-summary>Current control-plane summary.</p>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-          <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-medium text-of-muted" data-dashboard-environment>Production</span>
-          <span class="of-badge inline-flex rounded-full border border-of-accent/15 bg-of-accentSoft px-3 py-1 text-xs font-semibold text-of-accentStrong" data-dashboard-state-badge>Normal sample</span>
+        <div class="grid gap-3 lg:justify-items-end">
+          <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+            <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-medium text-of-muted" data-dashboard-environment>Production</span>
+            <span class="of-badge inline-flex rounded-full border border-of-accent/15 bg-of-accentSoft px-3 py-1 text-xs font-semibold text-of-accentStrong" data-dashboard-state-badge>Normal sample</span>
+          </div>
           <a class="of-button of-button--ghost inline-flex min-h-10 items-center justify-center rounded-control border border-of-line bg-white px-4 py-2 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-of-panelMuted" href="index.html">Back to launcher</a>
         </div>
       </div>
 
-        <div class="grid gap-3 border-t border-of-line pt-4 sm:grid-cols-3">
-          <div class="rounded-control border border-of-line bg-of-panelMuted px-4 py-3">
-            <p class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Region</p>
-            <p class="mt-1 text-sm font-semibold text-slate-900" data-dashboard-region>LON1</p>
+      <div class="of-meta-grid border-t border-of-line px-4 py-4 sm:grid-cols-3 sm:px-5 lg:px-6">
+        <div class="of-meta-card">
+          <p class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Region</p>
+          <p class="mt-1 text-sm font-semibold text-slate-900" data-dashboard-region>LON1</p>
+        </div>
+        <div class="of-meta-card">
+          <p class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Resolver fleet</p>
+          <p class="mt-1 text-sm font-semibold text-slate-900" data-dashboard-resolver-fleet>3 nodes</p>
+        </div>
+        <div class="of-meta-card">
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Policy version</span>
+            <span class="text-sm font-semibold text-slate-900" data-dashboard-policy-version>Policy set</span>
           </div>
-          <div class="rounded-control border border-of-line bg-of-panelMuted px-4 py-3">
-            <p class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Resolver fleet</p>
-            <p class="mt-1 text-sm font-semibold text-slate-900" data-dashboard-resolver-fleet>3 nodes</p>
+          <div class="mt-2 flex items-center justify-between gap-3">
+            <span class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Last sync</span>
+            <span class="text-sm font-semibold text-slate-900" data-dashboard-last-sync>Moments ago</span>
           </div>
-          <div class="rounded-control border border-of-line bg-of-panelMuted px-4 py-3">
-            <div class="flex items-center justify-between gap-3">
-              <span class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Policy version</span>
-              <span class="text-sm font-semibold text-slate-900" data-dashboard-policy-version>Policy set</span>
-            </div>
-            <div class="mt-2 flex items-center justify-between gap-3">
-              <span class="text-[11px] font-semibold uppercase tracking-label text-of-muted">Last sync</span>
-              <span class="text-sm font-semibold text-slate-900" data-dashboard-last-sync>Moments ago</span>
-            </div>
-          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-of-line px-4 py-4 sm:px-5 lg:px-6">
+        <div class="of-chip-row">
+          <a class="of-chip is-active" href="dashboard.html">Overview</a>
+          <a class="of-chip" href="activity.html">Activity</a>
+          <a class="of-chip" href="dns-records.html">DNS records</a>
+          <a class="of-chip" href="allow-list.html">Allow list</a>
+          <a class="of-chip" href="block-list.html">Block list</a>
         </div>
       </div>
     </header>
@@ -68,24 +78,18 @@
               <span class="text-xs font-semibold uppercase tracking-label text-of-muted">Immediate state</span>
             </div>
 
-            <div class="mt-5 grid gap-3">
-              <div class="rounded-control border border-of-line bg-of-panelMuted p-4">
-                <div class="flex items-center justify-between gap-4">
-                  <span class="text-sm font-medium text-of-muted">Platform state</span>
-                  <span class="status status--success text-sm font-semibold" data-health-service>Running</span>
-                </div>
+            <div class="of-health-list">
+              <div class="of-health-row">
+                <span class="of-health-row__label">Platform state</span>
+                <span class="status status--success text-sm font-semibold" data-health-service>Running</span>
               </div>
-              <div class="rounded-control border border-of-line bg-of-panelMuted p-4">
-                <div class="flex items-center justify-between gap-4">
-                  <span class="text-sm font-medium text-of-muted">HTTP / API</span>
-                  <span class="text-sm font-semibold text-slate-900" data-health-http>Healthy</span>
-                </div>
+              <div class="of-health-row">
+                <span class="of-health-row__label">HTTP / API</span>
+                <span class="text-sm font-semibold text-slate-900" data-health-http>Healthy</span>
               </div>
-              <div class="rounded-control border border-of-line bg-of-panelMuted p-4">
-                <div class="flex items-center justify-between gap-4">
-                  <span class="text-sm font-medium text-of-muted">DNS service</span>
-                  <span class="text-sm font-semibold text-slate-900" data-health-dns>Healthy</span>
-                </div>
+              <div class="of-health-row">
+                <span class="of-health-row__label">DNS service</span>
+                <span class="text-sm font-semibold text-slate-900" data-health-dns>Healthy</span>
               </div>
             </div>
           </article>
@@ -139,7 +143,7 @@
             <li class="of-list-row"></li>
           </template>
 
-          <ul class="mt-5 grid gap-3" data-activity-list aria-label="Recent requests"></ul>
+          <ul class="of-data-list" data-activity-list aria-label="Recent requests"></ul>
         </section>
       </section>
 
@@ -159,34 +163,48 @@
             <p class="mt-1 dashboard-empty__copy" data-empty-copy="top-blocked-domains"></p>
           </div>
 
-          <ul class="mt-5 grid gap-3" data-blocked-list aria-label="Top blocked domains"></ul>
+          <ul class="of-data-list" data-blocked-list aria-label="Top blocked domains"></ul>
         </section>
 
-        <section class="of-panel rounded-panel border border-of-line bg-slate-950 p-6 text-slate-100 shadow-panel">
+        <section class="of-panel of-panel--soft rounded-panel border border-of-line p-6 shadow-panel">
           <div class="flex items-center justify-between gap-4">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-label text-slate-300">Quick actions</p>
-              <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-white">Review-only shortcuts</h2>
-              <p class="mt-2 text-sm leading-6 text-slate-300">Deliberately shallow actions. They acknowledge the shell without pretending the rest of the product exists.</p>
+              <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Quick actions</p>
+              <h2 class="of-section-heading mt-2 text-xl font-semibold tracking-tight text-slate-950">Operational actions</h2>
+              <p class="mt-2 text-sm leading-6 text-of-muted">Move straight from inspection into the pages that now model the real admin work.</p>
             </div>
           </div>
 
-          <div class="mt-5 grid gap-3">
-            <button class="of-button of-button--secondary inline-flex min-h-11 items-center justify-between rounded-control border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/10 dashboard-action" type="button" data-action="import-config">
-              <span>Import config</span>
-              <span class="text-xs uppercase tracking-label text-slate-400">Stub</span>
-            </button>
-            <button class="of-button of-button--secondary inline-flex min-h-11 items-center justify-between rounded-control border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/10 dashboard-action" type="button" data-action="view-activity">
-              <span>View activity</span>
-              <span class="text-xs uppercase tracking-label text-slate-400">Scroll</span>
-            </button>
-            <button class="of-button of-button--secondary inline-flex min-h-11 items-center justify-between rounded-control border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/10 dashboard-action" type="button" data-action="manage-rules">
-              <span>Manage rules</span>
-              <span class="text-xs uppercase tracking-label text-slate-400">Stub</span>
-            </button>
+          <div class="mt-5 of-link-list">
+            <a class="of-link-row of-link-row--primary" href="dns-records.html?state=add-record">
+              <span class="of-link-row__copy">
+                <span class="of-link-row__title">Add DNS record</span>
+                <span class="of-link-row__body">Open the record panel with a seeded example and compact DNS help.</span>
+              </span>
+              <span class="of-link-row__meta">Records</span>
+            </a>
+            <a class="of-link-row" href="allow-list.html?state=add-rule&domain=video.example.org">
+              <span class="of-link-row__copy">
+                <span class="of-link-row__title">Allow domain</span>
+                <span class="of-link-row__body">Prefill the exception flow from a known allowed service path.</span>
+              </span>
+              <span class="of-link-row__meta">Policy</span>
+            </a>
+            <a class="of-link-row" href="block-list.html?state=add-rule&domain=ads.example.net">
+              <span class="of-link-row__copy">
+                <span class="of-link-row__title">Block domain</span>
+                <span class="of-link-row__body">Open the enforcement flow with a blocked domain already prefilled.</span>
+              </span>
+              <span class="of-link-row__meta">Policy</span>
+            </a>
+            <a class="of-link-row" href="activity.html?filter=blocked">
+              <span class="of-link-row__copy">
+                <span class="of-link-row__title">Review blocked traffic</span>
+                <span class="of-link-row__body">Jump straight into the blocked-only feed for faster triage.</span>
+              </span>
+              <span class="of-link-row__meta">Inspect</span>
+            </a>
           </div>
-
-          <p class="mt-4 rounded-control border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-slate-300" data-action-note hidden></p>
         </section>
       </aside>
     </div>
@@ -227,10 +245,6 @@
         const blockedEmpty = root.querySelector('[data-empty-state="top-blocked-domains"]');
         const activityEmptyCopy = root.querySelector('[data-empty-copy="recent-activity"]');
         const blockedEmptyCopy = root.querySelector('[data-empty-copy="top-blocked-domains"]');
-        const actionNote = root.querySelector('[data-action-note]');
-        const actionButtons = root.querySelectorAll('[data-action]');
-        const recentActivitySection = root.querySelector('[data-dashboard-section="recent-activity"]');
-
         function formatCount(count) {
           return new Intl.NumberFormat('en-GB').format(count);
         }
@@ -356,33 +370,10 @@
           });
         }
 
-        function showActionNote(message) {
-          actionNote.textContent = message;
-          setHidden(actionNote, false);
-        }
-
         renderStatContent();
         renderRecentActivity();
         renderBlockedDomains();
         setReviewStateClass(root, state);
-
-        actionButtons.forEach((button) => {
-          button.addEventListener('click', () => {
-            const action = button.getAttribute('data-action');
-            if (action === 'import-config') {
-              showActionNote('Import config remains a setup-flow stub in this prototype.');
-              return;
-            }
-
-            if (action === 'view-activity') {
-              recentActivitySection.scrollIntoView({ block: 'start' });
-              showActionNote('Viewing activity stays within the dashboard mock-up.');
-              return;
-            }
-
-            showActionNote('Rules are not modelled in this slice.');
-          });
-        });
       });
     }());
   </script>
