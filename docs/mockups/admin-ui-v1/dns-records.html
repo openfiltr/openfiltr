@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenFiltr DNS Records</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23178792'/%3E%3C/svg%3E">
+  <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-of-canvas text-of-ink antialiased">
+  <main class="of-shell mx-auto min-h-screen max-w-shell px-4 py-4 sm:px-6 lg:px-8" data-page="dns-records">
+    <div class="absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(circle_at_top_right,_rgba(0,105,255,0.14),_transparent_46%),linear-gradient(180deg,_rgba(237,243,251,0.95)_0%,_rgba(245,248,252,0.45)_58%,_rgba(245,248,252,1)_100%)]"></div>
+
+    <div class="of-app-shell">
+      <header class="of-topbar rounded-[1.2rem] border border-white/70 bg-white/90 p-4 shadow-topbar backdrop-blur sm:p-5">
+        <div class="of-page-hero">
+          <div class="of-toolbar">
+            <div class="of-toolbar__copy">
+              <div class="flex items-start gap-4">
+                <img class="h-auto w-14 shrink-0 sm:w-16" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold uppercase tracking-label text-of-accentStrong">OpenFiltr control plane</p>
+                  <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950">DNS records</h1>
+                  <p class="mt-2 max-w-3xl text-sm leading-6 text-of-muted" data-page-summary>Manage the records this resolver should authoritatively answer for the local deployment.</p>
+                </div>
+              </div>
+            </div>
+            <div class="grid gap-3 sm:justify-items-end">
+              <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                <span class="of-badge of-badge--neutral" data-zone-badge>home.arpa</span>
+                <a class="of-badge of-badge--accent" href="dns-records.html?state=add-record">Add record</a>
+              </div>
+              <a class="of-button of-button--ghost inline-flex min-h-10 items-center justify-center rounded-control border border-of-line bg-white px-4 py-2 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-of-panelMuted" href="index.html">Back to launcher</a>
+            </div>
+          </div>
+          <div class="of-page-context" data-context-cards aria-label="DNS records context"></div>
+        </div>
+      </header>
+
+      <div class="of-app-shell__body">
+        <aside class="of-side-nav">
+          <div class="of-side-nav__section">
+            <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Navigate</p>
+            <a class="of-side-nav__link" href="dashboard.html">
+              <span class="of-side-nav__title">Overview</span>
+              <span class="of-side-nav__meta">Return to the operational summary.</span>
+            </a>
+            <a class="of-side-nav__link" href="activity.html">
+              <span class="of-side-nav__title">Activity</span>
+              <span class="of-side-nav__meta">Inspect recent resolver decisions.</span>
+            </a>
+            <a class="of-side-nav__link is-active" href="dns-records.html">
+              <span class="of-side-nav__title">DNS records</span>
+              <span class="of-side-nav__meta">Add and review host records.</span>
+            </a>
+            <a class="of-side-nav__link" href="allow-list.html">
+              <span class="of-side-nav__title">Allow list</span>
+              <span class="of-side-nav__meta">Manage explicit exceptions.</span>
+            </a>
+            <a class="of-side-nav__link" href="block-list.html">
+              <span class="of-side-nav__title">Block list</span>
+              <span class="of-side-nav__meta">Manage enforced domains.</span>
+            </a>
+          </div>
+        </aside>
+
+        <section class="grid gap-5">
+          <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+            <div class="of-filter-bar">
+              <div class="of-filter-bar__copy">
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Record guidance</p>
+                <h2 class="of-section-heading text-xl font-semibold tracking-tight text-slate-950">Common types</h2>
+              </div>
+            </div>
+            <ul class="of-term-help-list mt-4" aria-label="DNS record help">
+              <li class="of-term-help">
+                <span class="of-term-help__label">A</span>
+                <p class="of-term-help__hint">IPv4 host record</p>
+                <button class="of-info-trigger" type="button" data-info-term="A" aria-expanded="false" aria-controls="dns-info-panel"><span aria-hidden="true">i</span><span class="sr-only">Explain A record</span></button>
+              </li>
+              <li class="of-term-help">
+                <span class="of-term-help__label">AAAA</span>
+                <p class="of-term-help__hint">IPv6 host record</p>
+                <button class="of-info-trigger" type="button" data-info-term="AAAA" aria-expanded="false" aria-controls="dns-info-panel"><span aria-hidden="true">i</span><span class="sr-only">Explain AAAA record</span></button>
+              </li>
+              <li class="of-term-help">
+                <span class="of-term-help__label">CNAME</span>
+                <p class="of-term-help__hint">Alias to another name</p>
+                <button class="of-info-trigger" type="button" data-info-term="CNAME" aria-expanded="false" aria-controls="dns-info-panel"><span aria-hidden="true">i</span><span class="sr-only">Explain CNAME record</span></button>
+              </li>
+              <li class="of-term-help">
+                <span class="of-term-help__label">MX</span>
+                <p class="of-term-help__hint">Mail delivery target</p>
+                <button class="of-info-trigger" type="button" data-info-term="MX" aria-expanded="false" aria-controls="dns-info-panel"><span aria-hidden="true">i</span><span class="sr-only">Explain MX record</span></button>
+              </li>
+              <li class="of-term-help">
+                <span class="of-term-help__label">TXT</span>
+                <p class="of-term-help__hint">Text metadata record</p>
+                <button class="of-info-trigger" type="button" data-info-term="TXT" aria-expanded="false" aria-controls="dns-info-panel"><span aria-hidden="true">i</span><span class="sr-only">Explain TXT record</span></button>
+              </li>
+              <li class="of-term-help">
+                <span class="of-term-help__label">TTL</span>
+                <p class="of-term-help__hint">Resolver cache lifetime</p>
+                <button class="of-info-trigger" type="button" data-info-term="TTL" aria-expanded="false" aria-controls="dns-info-panel"><span aria-hidden="true">i</span><span class="sr-only">Explain TTL</span></button>
+              </li>
+            </ul>
+            <div class="of-info-panel mt-4" id="dns-info-panel" data-info-panel hidden></div>
+          </section>
+
+          <div class="of-data-grid">
+            <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+              <div class="of-toolbar">
+                <div class="of-toolbar__copy">
+                  <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Zone records</p>
+                  <h2 class="of-section-heading text-xl font-semibold tracking-tight text-slate-950">DNS records</h2>
+                  <p class="text-sm leading-6 text-of-muted">A, AAAA, CNAME, MX, TXT, and TTL values stay visible so reviewers can judge the editing flow properly.</p>
+                </div>
+                <div class="of-chip-row">
+                  <a class="of-chip is-active" href="dns-records.html">Current zone</a>
+                  <a class="of-chip" href="dns-records.html?state=import-preview">Import preview</a>
+                </div>
+              </div>
+
+              <div class="of-filter-controls mt-5">
+                <label class="field">
+                  <span class="sr-only">Search records</span>
+                  <input class="of-input" readonly placeholder="Search records, names, or values">
+                </label>
+                <div class="of-chip-row" aria-label="Record type filters">
+                  <span class="of-chip is-active">All records</span>
+                  <span class="of-chip">Host</span>
+                  <span class="of-chip">Mail</span>
+                  <span class="of-chip">Text</span>
+                </div>
+              </div>
+
+              <div class="of-empty-stack mt-5" data-empty-state hidden>
+                <p class="font-semibold text-slate-900">No records in this zone yet.</p>
+                <p class="text-sm leading-6 text-of-muted" data-empty-copy></p>
+              </div>
+
+              <div class="of-table-wrap mt-5">
+                <table class="of-table" aria-label="DNS records table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Value</th>
+                      <th>TTL</th>
+                    </tr>
+                  </thead>
+                  <tbody data-record-rows></tbody>
+                </table>
+              </div>
+            </section>
+
+            <aside class="grid gap-5">
+              <section class="of-panel of-panel--soft rounded-panel border border-of-line p-5 shadow-panel">
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Record panel</p>
+                <div class="of-editor-panel mt-3" data-record-panel>
+                  <h3 class="of-section-heading text-lg font-semibold tracking-tight text-slate-950" data-panel-title>Add record</h3>
+                  <p class="mt-2 text-sm leading-6 text-of-muted" data-panel-summary>Start with the common record types and keep the edit flow compact.</p>
+                  <div class="grid gap-4 mt-4" data-panel-form>
+                    <div class="field">
+                      <label class="field__label text-sm text-slate-900" for="record-type">Type</label>
+                      <input class="of-input" id="record-type" data-panel-type readonly value="A">
+                    </div>
+                    <div class="field">
+                      <label class="field__label text-sm text-slate-900" for="record-name">Name</label>
+                      <input class="of-input" id="record-name" data-panel-name readonly value="printer">
+                    </div>
+                    <div class="field">
+                      <label class="field__label text-sm text-slate-900" for="record-value">Value</label>
+                      <input class="of-input" id="record-value" data-panel-value readonly value="192.0.2.44">
+                      <p class="field__error" data-panel-value-error hidden></p>
+                    </div>
+                    <div class="field">
+                      <label class="field__label text-sm text-slate-900" for="record-ttl">TTL</label>
+                      <input class="of-input" id="record-ttl" data-panel-ttl readonly value="300">
+                      <p class="field__error" data-panel-ttl-error hidden></p>
+                    </div>
+                  </div>
+                  <div class="of-empty-stack mt-4" data-panel-preview hidden>
+                    <p class="font-semibold text-slate-900">Import preview</p>
+                    <ul class="of-review-list text-sm text-of-muted" data-preview-list></ul>
+                  </div>
+                  <div class="form-notice form-notice--success mt-4" data-panel-success hidden>Record added.</div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="prototype.js"></script>
+  <script src="mock-data.js"></script>
+  <script>
+    (function () {
+      const prototype = window.OpenFiltrPrototype;
+      if (!prototype) {
+        return;
+      }
+
+      prototype.bootPage(({ state, setHidden, setReviewStateClass }) => {
+        const root = document.querySelector('[data-page="dns-records"]');
+        const data = prototype.resolveDnsRecordsData(state);
+        const rows = root.querySelector('[data-record-rows]');
+        const emptyState = root.querySelector('[data-empty-state]');
+        const emptyCopy = root.querySelector('[data-empty-copy]');
+        const zoneBadge = root.querySelector('[data-zone-badge]');
+        const pageSummary = root.querySelector('[data-page-summary]');
+        const contextCards = root.querySelector('[data-context-cards]');
+        const infoPanel = root.querySelector('[data-info-panel]');
+        const infoTriggers = Array.from(root.querySelectorAll('[data-info-term]'));
+        const panelTitle = root.querySelector('[data-panel-title]');
+        const panelSummary = root.querySelector('[data-panel-summary]');
+        const panelType = root.querySelector('[data-panel-type]');
+        const panelName = root.querySelector('[data-panel-name]');
+        const panelValue = root.querySelector('[data-panel-value]');
+        const panelTtl = root.querySelector('[data-panel-ttl]');
+        const panelValueError = root.querySelector('[data-panel-value-error]');
+        const panelTtlError = root.querySelector('[data-panel-ttl-error]');
+        const panelSuccess = root.querySelector('[data-panel-success]');
+        const panelPreview = root.querySelector('[data-panel-preview]');
+        const previewList = root.querySelector('[data-preview-list]');
+
+        function renderContextCards(cards) {
+          contextCards.innerHTML = '';
+
+          cards.forEach((card) => {
+            const item = document.createElement('article');
+            item.className = `of-context-card${card.tone ? ` of-context-card--${card.tone}` : ''}`;
+            item.innerHTML = [
+              `<p class="of-context-card__label">${card.label}</p>`,
+              `<p class="of-context-card__value">${card.value}</p>`,
+              `<p class="of-context-card__detail">${card.detail}</p>`,
+            ].join('');
+            contextCards.appendChild(item);
+          });
+        }
+
+        zoneBadge.textContent = data.zone;
+        pageSummary.textContent = data.summary;
+        setReviewStateClass(root, state);
+        prototype.bindInfoPanelGroup({ panel: infoPanel, triggers: infoTriggers });
+
+        rows.innerHTML = '';
+        if (!data.records.length) {
+          emptyCopy.textContent = 'Use the add-record panel to create the first host entry in this zone.';
+          setHidden(emptyState, false);
+        } else {
+          setHidden(emptyState, true);
+          data.records.forEach((record) => {
+            const row = document.createElement('tr');
+            row.innerHTML = [
+              `<td><p class="of-table__title">${record.name}</p><p class="of-table__meta">${record.note}</p></td>`,
+              `<td>${record.type}</td>`,
+              `<td>${record.value}</td>`,
+              `<td>${record.ttl}</td>`,
+            ].join('');
+            rows.appendChild(row);
+          });
+        }
+
+        panelTitle.textContent = data.panel.title;
+        panelSummary.textContent = data.panel.summary;
+        setHidden(panelPreview, true);
+        setHidden(panelSuccess, true);
+        setHidden(panelValueError, true);
+        setHidden(panelTtlError, true);
+
+        if (data.panel.fields) {
+          panelType.value = data.panel.fields.type || '';
+          panelName.value = data.panel.fields.name || '';
+          panelValue.value = data.panel.fields.value || '';
+          panelTtl.value = data.panel.fields.ttl || '';
+        }
+
+        if (data.panel.errors) {
+          if (data.panel.errors.value) {
+            panelValueError.textContent = data.panel.errors.value;
+            setHidden(panelValueError, false);
+          }
+          if (data.panel.errors.ttl) {
+            panelTtlError.textContent = data.panel.errors.ttl;
+            setHidden(panelTtlError, false);
+          }
+        }
+
+        const panelTone = data.panel.mode === 'record-added'
+          ? 'success'
+          : data.panel.mode === 'import-preview'
+            ? 'warning'
+            : state === 'validation-error'
+              ? 'danger'
+              : 'accent';
+
+        renderContextCards([
+          {
+            label: 'Authority zone',
+            value: data.zone,
+            detail: 'This is the resolver-owned namespace shown in the mock-up.',
+            tone: 'accent',
+          },
+          {
+            label: 'Visible records',
+            value: data.records.length ? `${data.records.length} live entries` : 'Empty zone',
+            detail: data.records.length ? 'A, AAAA, CNAME, MX, TXT, and TTL stay visible for review.' : 'Use the record panel to seed the first host or alias.',
+          },
+          {
+            label: 'Panel state',
+            value: data.panel.title,
+            detail: data.panel.summary,
+            tone: panelTone,
+          },
+        ]);
+
+        if (data.panel.mode === 'record-added') {
+          panelSuccess.textContent = data.panel.summary;
+          setHidden(panelSuccess, false);
+        }
+
+        if (data.panel.mode === 'import-preview') {
+          previewList.innerHTML = '';
+          data.panel.preview.forEach((item) => {
+            const row = document.createElement('li');
+            row.className = 'of-review-item';
+            row.innerHTML = `<span>${item}</span>`;
+            previewList.appendChild(row);
+          });
+          setHidden(panelPreview, false);
+        }
+
+      });
+    }());
+  </script>
+</body>
+</html>
