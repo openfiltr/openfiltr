@@ -33,11 +33,18 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
+	csrfToken, err := newCSRFToken()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to generate CSRF token")
+		return
+	}
 	http.SetCookie(w, &http.Cookie{
-		Name: "openfiltr_token", Value: token, Path: "/",
+		Name: authCookieName, Value: token, Path: "/",
 		HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode,
 		MaxAge: h.cfg.Auth.TokenExpiry * 3600,
 	})
+	setCSRFCookie(w, csrfToken, h.cfg.Auth.TokenExpiry*3600)
+	w.Header().Set(csrfHeaderName, csrfToken)
 	respond(w, http.StatusOK, map[string]string{"token": token, "username": req.Username, "role": role})
 }
 
@@ -76,9 +83,10 @@ func (h *Handler) Setup(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
-		Name: "openfiltr_token", Value: "", Path: "/", MaxAge: -1,
+		Name: authCookieName, Value: "", Path: "/", MaxAge: -1,
 		HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode,
 	})
+	setCSRFCookie(w, "", -1)
 	respond(w, http.StatusOK, map[string]string{"message": "logged out"})
 }
 

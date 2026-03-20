@@ -16,6 +16,9 @@ info:
     `POST /api/v1/auth/tokens` (long-lived API tokens prefixed with `oft_`).
 
     Browser sessions may also use the `openfiltr_token` HttpOnly cookie set on login.
+    Login responses also return an `X-CSRF-Token` header and set an
+    `openfiltr_csrf` cookie. Browser clients must echo that header on
+    state-changing requests that rely on the session cookie.
   contact:
     name: OpenFiltr Community
     url: https://github.com/openfiltr/openfiltr
@@ -447,7 +450,7 @@ paths:
     post:
       tags: [auth]
       summary: Log in
-      description: Validates credentials and returns a JWT token. Also sets the `openfiltr_token` HttpOnly cookie for browser sessions.
+      description: Validates credentials and returns a JWT token. Also sets the `openfiltr_token` HttpOnly cookie for browser sessions and returns the CSRF token for cookie-authenticated requests.
       security: []
       operationId: login
       requestBody:
@@ -468,6 +471,11 @@ paths:
       responses:
         "200":
           description: Authenticated
+          headers:
+            X-CSRF-Token:
+              description: CSRF token required for subsequent state-changing requests that use the browser session cookie.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -491,7 +499,7 @@ paths:
     post:
       tags: [auth]
       summary: Log out
-      description: Clears the session cookie.
+      description: Clears the session and CSRF cookies.
       operationId: logout
       responses:
         "200":
