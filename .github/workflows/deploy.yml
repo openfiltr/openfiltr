@@ -22,7 +22,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Stamp cache version into service worker
         run: |
@@ -39,7 +39,7 @@ jobs:
             pr-preview/
 
       - name: Checkout gh-pages for deployment
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: gh-pages
           path: _deploy
