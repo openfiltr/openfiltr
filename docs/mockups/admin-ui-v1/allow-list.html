@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenFiltr Allow List</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23178792'/%3E%3C/svg%3E">
+  <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-of-canvas text-of-ink antialiased">
+  <main class="of-shell mx-auto min-h-screen max-w-shell px-4 py-4 sm:px-6 lg:px-8" data-page="allow-list">
+    <div class="absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(circle_at_top_left,_rgba(0,105,255,0.12),_transparent_45%),linear-gradient(180deg,_rgba(237,243,251,0.95)_0%,_rgba(245,248,252,0.45)_58%,_rgba(245,248,252,1)_100%)]"></div>
+
+    <div class="of-app-shell">
+      <header class="of-topbar rounded-[1.2rem] border border-white/70 bg-white/90 p-4 shadow-topbar backdrop-blur sm:p-5">
+        <div class="of-page-hero">
+          <div class="of-toolbar">
+            <div class="of-toolbar__copy">
+              <div class="flex items-start gap-4">
+                <img class="h-auto w-14 shrink-0 sm:w-16" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold uppercase tracking-label text-of-accentStrong">OpenFiltr control plane</p>
+                  <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Allow list</h1>
+                  <p class="mt-2 max-w-3xl text-sm leading-6 text-of-muted" data-page-copy>Explicit exceptions for domains that should bypass broader blocking rules.</p>
+                </div>
+              </div>
+            </div>
+            <div class="grid gap-3 sm:justify-items-end">
+              <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                <span class="of-badge of-badge--neutral">Exception policy</span>
+                <a class="of-badge of-badge--accent" href="allow-list.html?state=add-rule">Add allow rule</a>
+              </div>
+              <a class="of-button of-button--ghost inline-flex min-h-10 items-center justify-center rounded-control border border-of-line bg-white px-4 py-2 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-of-panelMuted" href="index.html">Back to launcher</a>
+            </div>
+          </div>
+          <div class="of-page-context" data-context-cards aria-label="Allow-list context"></div>
+        </div>
+      </header>
+
+      <div class="of-app-shell__body">
+        <aside class="of-side-nav">
+          <div class="of-side-nav__section">
+            <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Navigate</p>
+            <a class="of-side-nav__link" href="dashboard.html">
+              <span class="of-side-nav__title">Overview</span>
+              <span class="of-side-nav__meta">Return to the operational summary.</span>
+            </a>
+            <a class="of-side-nav__link" href="activity.html">
+              <span class="of-side-nav__title">Activity</span>
+              <span class="of-side-nav__meta">Inspect recent resolver decisions.</span>
+            </a>
+            <a class="of-side-nav__link" href="dns-records.html">
+              <span class="of-side-nav__title">DNS records</span>
+              <span class="of-side-nav__meta">Manage authoritative records.</span>
+            </a>
+            <a class="of-side-nav__link is-active" href="allow-list.html">
+              <span class="of-side-nav__title">Allow list</span>
+              <span class="of-side-nav__meta">Review explicit exceptions.</span>
+            </a>
+            <a class="of-side-nav__link" href="block-list.html">
+              <span class="of-side-nav__title">Block list</span>
+              <span class="of-side-nav__meta">Manage enforced domains.</span>
+            </a>
+          </div>
+        </aside>
+
+        <section class="grid gap-5">
+          <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+            <div class="of-filter-bar">
+              <div class="of-filter-bar__copy">
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Policy help</p>
+                <h2 class="of-section-heading text-xl font-semibold tracking-tight text-slate-950">Allow-list guidance</h2>
+              </div>
+            </div>
+            <ul class="of-term-help-list mt-4" aria-label="Allow-list help">
+              <li class="of-term-help">
+                <span class="of-term-help__label">Allow list</span>
+                <p class="of-term-help__hint">Explicit exception path</p>
+                <button class="of-info-trigger" type="button" data-info-term="allow list" aria-expanded="false" aria-controls="allow-info-panel"><span aria-hidden="true">i</span><span class="sr-only">Explain allow list</span></button>
+              </li>
+              <li class="of-term-help">
+                <span class="of-term-help__label">Matched rule</span>
+                <p class="of-term-help__hint">Policy source for a decision</p>
+                <button class="of-info-trigger" type="button" data-info-term="matched rule" aria-expanded="false" aria-controls="allow-info-panel"><span aria-hidden="true">i</span><span class="sr-only">Explain matched rule</span></button>
+              </li>
+            </ul>
+            <div class="of-info-panel mt-4" id="allow-info-panel" data-info-panel hidden></div>
+          </section>
+
+          <div class="of-data-grid">
+            <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+              <div class="of-toolbar">
+                <div class="of-toolbar__copy">
+                  <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Exception rules</p>
+                  <h2 class="of-section-heading text-xl font-semibold tracking-tight text-slate-950">Allow list</h2>
+                  <p class="text-sm leading-6 text-of-muted">Use this page for narrow exceptions rather than broad policy reversals.</p>
+                </div>
+                <div class="of-chip-row">
+                  <a class="of-chip is-active" href="allow-list.html">Current rules</a>
+                  <a class="of-chip" href="allow-list.html?state=add-rule">Add allow rule</a>
+                </div>
+              </div>
+
+              <div class="of-filter-controls mt-5">
+                <label class="field">
+                  <span class="sr-only">Search allow-list rules</span>
+                  <input class="of-input" readonly placeholder="Search domains or scopes">
+                </label>
+                <div class="of-chip-row" aria-label="Allow-list scope filters">
+                  <span class="of-chip is-active">All scopes</span>
+                  <span class="of-chip">All clients</span>
+                  <span class="of-chip">Work laptops</span>
+                </div>
+              </div>
+
+              <div class="of-empty-stack mt-5" data-empty-state hidden>
+                <p class="font-semibold text-slate-900">No allow rules yet.</p>
+                <p class="text-sm leading-6 text-of-muted" data-empty-copy></p>
+              </div>
+
+              <div class="of-table-wrap mt-5">
+                <table class="of-table" aria-label="Allow list rules">
+                  <thead>
+                    <tr>
+                      <th>Domain</th>
+                      <th>Scope</th>
+                      <th>Last hit</th>
+                    </tr>
+                  </thead>
+                  <tbody data-policy-rows></tbody>
+                </table>
+              </div>
+            </section>
+
+            <aside class="grid gap-5">
+              <section class="of-panel of-panel--soft rounded-panel border border-of-line p-5 shadow-panel">
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Rule panel</p>
+                <div class="of-editor-panel mt-3" data-policy-panel>
+                  <h3 class="of-section-heading text-lg font-semibold tracking-tight text-slate-950" data-panel-title>Add allow rule</h3>
+                  <p class="mt-2 text-sm leading-6 text-of-muted" data-panel-summary>Add a concise exception and keep the scope narrow where possible.</p>
+                  <p class="of-inline-note mt-4" data-panel-prefill hidden></p>
+                  <div class="grid gap-4 mt-4">
+                    <div class="field">
+                      <label class="field__label text-sm text-slate-900" for="allow-domain">Domain</label>
+                      <input class="of-input" id="allow-domain" data-panel-domain readonly value="">
+                    </div>
+                    <div class="field">
+                      <label class="field__label text-sm text-slate-900" for="allow-scope">Scope</label>
+                      <input class="of-input" id="allow-scope" data-panel-scope readonly value="All clients">
+                    </div>
+                    <div class="field">
+                      <label class="field__label text-sm text-slate-900" for="allow-reason">Reason</label>
+                      <input class="of-input" id="allow-reason" data-panel-reason readonly value="Trusted service">
+                    </div>
+                  </div>
+                  <div class="form-notice form-notice--success mt-4" data-panel-success hidden>Allow rule added.</div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="prototype.js"></script>
+  <script src="mock-data.js"></script>
+  <script>
+    (function () {
+      const prototype = window.OpenFiltrPrototype;
+      if (!prototype) {
+        return;
+      }
+
+      prototype.bootPage(({ state, getQueryParam, setHidden, setReviewStateClass }) => {
+        const root = document.querySelector('[data-page="allow-list"]');
+        const domain = getQueryParam('domain');
+        const data = prototype.resolvePolicyPageData('allow-list', state, domain);
+        const rows = root.querySelector('[data-policy-rows]');
+        const emptyState = root.querySelector('[data-empty-state]');
+        const emptyCopy = root.querySelector('[data-empty-copy]');
+        const infoPanel = root.querySelector('[data-info-panel]');
+        const infoTriggers = Array.from(root.querySelectorAll('[data-info-term]'));
+        const contextCards = root.querySelector('[data-context-cards]');
+        const panelTitle = root.querySelector('[data-panel-title]');
+        const panelSummary = root.querySelector('[data-panel-summary]');
+        const panelDomain = root.querySelector('[data-panel-domain]');
+        const panelScope = root.querySelector('[data-panel-scope]');
+        const panelReason = root.querySelector('[data-panel-reason]');
+        const panelSuccess = root.querySelector('[data-panel-success]');
+        const panelPrefill = root.querySelector('[data-panel-prefill]');
+
+        function renderContextCards(cards) {
+          contextCards.innerHTML = '';
+
+          cards.forEach((card) => {
+            const item = document.createElement('article');
+            item.className = `of-context-card${card.tone ? ` of-context-card--${card.tone}` : ''}`;
+            item.innerHTML = [
+              `<p class="of-context-card__label">${card.label}</p>`,
+              `<p class="of-context-card__value">${card.value}</p>`,
+              `<p class="of-context-card__detail">${card.detail}</p>`,
+            ].join('');
+            contextCards.appendChild(item);
+          });
+        }
+
+        setReviewStateClass(root, state);
+        prototype.bindInfoPanelGroup({ panel: infoPanel, triggers: infoTriggers });
+        rows.innerHTML = '';
+        if (!data.items.length) {
+          emptyCopy.textContent = data.emptyState;
+          setHidden(emptyState, false);
+        } else {
+          setHidden(emptyState, true);
+          data.items.forEach((item) => {
+            const row = document.createElement('tr');
+            row.innerHTML = [
+              `<td><p class="of-table__title">${item.domain}</p><p class="of-table__meta">${item.reason} • ${item.matchedRule}</p></td>`,
+              `<td>${item.scope}</td>`,
+              `<td>${item.lastHit}</td>`,
+            ].join('');
+            rows.appendChild(row);
+          });
+        }
+
+        panelTitle.textContent = data.panel.title;
+        panelSummary.textContent = data.panel.summary;
+        panelDomain.value = data.panel.fields ? data.panel.fields.domain || '' : '';
+        panelScope.value = data.panel.fields ? data.panel.fields.scope || '' : '';
+        panelReason.value = data.panel.fields ? data.panel.fields.reason || '' : '';
+        setHidden(panelSuccess, data.panel.mode !== 'rule-added');
+        setHidden(panelPrefill, !domain);
+
+        if (domain) {
+          panelPrefill.textContent = `Prefilled from recent activity for ${domain}. Review the scope before keeping the exception.`;
+        }
+
+        renderContextCards([
+          {
+            label: 'Visible exceptions',
+            value: data.items.length ? `${data.items.length} rules` : 'No rules yet',
+            detail: data.items.length ? 'The list stays narrow so reviewers can inspect each exception.' : 'This review state starts empty to test the first-rule flow.',
+            tone: 'success',
+          },
+          {
+            label: 'Latest hit',
+            value: data.items[0] ? data.items[0].lastHit : 'No recent hits',
+            detail: data.items[0] ? `${data.items[0].domain} was the latest domain matched by an allow rule.` : 'Recent traffic will surface here once exceptions exist.',
+          },
+          {
+            label: 'Panel state',
+            value: data.panel.title,
+            detail: domain ? `Seeded directly from ${domain} to show the quick-action path.` : data.panel.summary,
+            tone: data.panel.mode === 'rule-added' ? 'success' : domain ? 'accent' : '',
+          },
+        ]);
+      });
+    }());
+  </script>
+</body>
+</html>

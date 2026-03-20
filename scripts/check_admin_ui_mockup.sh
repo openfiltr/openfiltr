@@ -8,6 +8,10 @@ INDEX_HTML="$PROTOTYPE_DIR/index.html"
 DASHBOARD_HTML="$PROTOTYPE_DIR/dashboard.html"
 SETUP_HTML="$PROTOTYPE_DIR/setup.html"
 LOGIN_HTML="$PROTOTYPE_DIR/login.html"
+ACTIVITY_HTML="$PROTOTYPE_DIR/activity.html"
+DNS_RECORDS_HTML="$PROTOTYPE_DIR/dns-records.html"
+ALLOW_LIST_HTML="$PROTOTYPE_DIR/allow-list.html"
+BLOCK_LIST_HTML="$PROTOTYPE_DIR/block-list.html"
 LOGO="$PROTOTYPE_DIR/assets/openfiltr-logo.svg"
 THEME_JS="$PROTOTYPE_DIR/theme.js"
 STYLES="$PROTOTYPE_DIR/styles.css"
@@ -29,6 +33,10 @@ check_file "$SETUP_HTML" "setup.html"
 check_file "$LOGIN_HTML" "login.html"
 check_file "$DASHBOARD_HTML" "dashboard.html"
 check_file "$INDEX_HTML" "index.html"
+check_file "$ACTIVITY_HTML" "activity.html"
+check_file "$DNS_RECORDS_HTML" "dns-records.html"
+check_file "$ALLOW_LIST_HTML" "allow-list.html"
+check_file "$BLOCK_LIST_HTML" "block-list.html"
 check_file "$LOGO" "logo asset"
 check_file "$THEME_JS" "theme.js"
 check_file "$STYLES" "styles.css"
@@ -117,7 +125,28 @@ check_file_contains "$STYLES" "styles" \
   '.of-list-row' \
   '.of-stepper' \
   '.of-step' \
-  '.of-kpi'
+  '.of-kpi' \
+  '.of-app-shell' \
+  '.of-side-nav' \
+  '.of-toolbar' \
+  '.of-table' \
+  '.of-info-trigger' \
+  '.of-info-panel'
+
+check_file_contains "$MOCK_DATA" "mock data" \
+  'dashboard' \
+  'activity' \
+  'dnsRecords' \
+  'allowList' \
+  'blockList' \
+  'infoPanels'
+
+check_file_contains "$PROTOTYPE_JS" "prototype" \
+  'resolveActivityData' \
+  'resolveDnsRecordsData' \
+  'resolvePolicyPageData' \
+  'getInfoPanelContent' \
+  'getQueryParam'
 
 check_page "$SETUP_HTML" "setup" \
   'assets/openfiltr-logo.svg' \
@@ -154,9 +183,18 @@ check_page "$INDEX_HTML" "launcher" \
   'setup.html' \
   'login.html' \
   'dashboard.html' \
+  'activity.html' \
+  'dns-records.html' \
+  'allow-list.html' \
+  'block-list.html' \
   'setup.html?state=validation-error' \
   'login.html?state=error' \
-  'dashboard.html?state=low-data'
+  'dashboard.html?state=low-data' \
+  'activity.html?filter=blocked' \
+  'dns-records.html?state=add-record' \
+  'dns-records.html?state=import-preview' \
+  'allow-list.html?state=add-rule' \
+  'block-list.html?state=add-rule'
 
 check_page "$DASHBOARD_HTML" "dashboard" \
   'assets/openfiltr-logo.svg' \
@@ -177,15 +215,57 @@ check_page "$DASHBOARD_HTML" "dashboard" \
   'Block rate' \
   'Recent activity' \
   'Top blocked domains' \
-  'Import config' \
-  'View activity' \
-  'Manage rules' \
+  'Add DNS record' \
+  'Allow domain' \
+  'Block domain' \
+  'Review blocked traffic' \
   'data-ui="metric-tile"'
+
+check_page "$ACTIVITY_HTML" "activity" \
+  'theme.js' \
+  'styles.css' \
+  'prototype.js' \
+  'data-page="activity"' \
+  'Recent activity' \
+  'matched rule' \
+  'activity.html?filter=blocked'
+
+check_page "$DNS_RECORDS_HTML" "dns records" \
+  'theme.js' \
+  'styles.css' \
+  'prototype.js' \
+  'data-page="dns-records"' \
+  'DNS records' \
+  'Add record' \
+  'A' \
+  'AAAA' \
+  'CNAME' \
+  'TTL'
+
+check_page "$ALLOW_LIST_HTML" "allow list" \
+  'theme.js' \
+  'styles.css' \
+  'prototype.js' \
+  'data-page="allow-list"' \
+  'Allow list' \
+  'Add allow rule'
+
+check_page "$BLOCK_LIST_HTML" "block list" \
+  'theme.js' \
+  'styles.css' \
+  'prototype.js' \
+  'data-page="block-list"' \
+  'Block list' \
+  'Add block rule'
 
 check_unapproved_external_https "$INDEX_HTML"
 check_unapproved_external_https "$SETUP_HTML"
 check_unapproved_external_https "$LOGIN_HTML"
 check_unapproved_external_https "$DASHBOARD_HTML"
+check_unapproved_external_https "$ACTIVITY_HTML"
+check_unapproved_external_https "$DNS_RECORDS_HTML"
+check_unapproved_external_https "$ALLOW_LIST_HTML"
+check_unapproved_external_https "$BLOCK_LIST_HTML"
 check_unapproved_external_https "$STYLES"
 check_unapproved_external_https "$MOCK_DATA"
 check_unapproved_external_https "$PROTOTYPE_JS"
@@ -257,6 +337,32 @@ if command -v node >/dev/null 2>&1; then
   assert(lowDataDashboard.recentActivity.length === 0, 'expected low-data recent activity to be empty');
   assert(lowDataDashboard.topBlockedDomains.length === 0, 'expected low-data blocked domains to be empty');
   assert(lowDataDashboard.emptyState.recentActivity.length > 0, 'expected low-data empty-state copy');
+
+  const activityData = prototype.resolveActivityData('default', '');
+  assert(activityData.items.length > 0, 'expected default activity feed');
+
+  const blockedActivity = prototype.resolveActivityData('default', 'blocked');
+  assert(blockedActivity.items.every((item) => item.action === 'Blocked'), 'expected blocked activity filter');
+
+  const dnsRecordsData = prototype.resolveDnsRecordsData('default');
+  assert(dnsRecordsData.records.length > 0, 'expected populated DNS records state');
+
+  const addRecordState = prototype.resolveDnsRecordsData('add-record');
+  assert(addRecordState.panel.mode === 'add-record', 'expected add-record state to open add panel');
+
+  const importPreviewState = prototype.resolveDnsRecordsData('import-preview');
+  assert(importPreviewState.panel.mode === 'import-preview', 'expected import-preview state to open import panel');
+
+  const allowListData = prototype.resolvePolicyPageData('allow-list', 'default', '');
+  assert(allowListData.items.length > 0, 'expected populated allow list');
+
+  const blockListData = prototype.resolvePolicyPageData('block-list', 'add-rule', 'ads.example.net');
+  assert(blockListData.panel.mode === 'add-rule', 'expected add-rule state to open policy panel');
+  assert(blockListData.panel.domain === 'ads.example.net', 'expected domain prefill for block rule');
+
+  const infoPanel = prototype.getInfoPanelContent('AAAA');
+  assert(infoPanel.title === 'AAAA record', 'expected AAAA info panel title');
+  assert(infoPanel.copy.length > 0, 'expected AAAA info panel copy');
 
   assert(theme && theme.theme && theme.theme.extend, 'expected Tailwind theme config');
   assert(theme.theme.extend.colors.of.accent === '#0b63d1', 'expected accent colour');

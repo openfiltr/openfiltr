@@ -12,19 +12,21 @@
 <body class="min-h-screen bg-of-canvas text-of-ink antialiased">
   <main class="of-shell mx-auto min-h-screen max-w-auth px-4 py-6 sm:px-6 lg:px-8" data-page="setup">
     <div class="absolute inset-x-0 top-0 -z-10 h-[26rem] bg-[radial-gradient(circle_at_top_left,_rgba(0,105,255,0.16),_transparent_52%),linear-gradient(180deg,_rgba(237,243,251,0.95)_0%,_rgba(245,248,252,0.45)_55%,_rgba(245,248,252,1)_100%)]"></div>
-    <div class="mx-auto grid max-w-auth gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(18rem,0.92fr)]">
+    <div class="mx-auto grid max-w-auth gap-6 xl:grid-cols-[minmax(0,1.16fr)_minmax(18rem,0.84fr)]">
       <section class="space-y-6">
         <header class="of-panel rounded-panel border border-of-line bg-white/95 p-6 shadow-panel backdrop-blur sm:p-7">
           <div class="flex flex-wrap items-center gap-3">
-            <span class="of-badge inline-flex rounded-full border border-of-accent/15 bg-of-accentSoft px-3 py-1 text-xs font-semibold uppercase tracking-label text-of-accentStrong">First-run setup</span>
-            <span class="of-badge inline-flex rounded-full border border-of-line bg-of-panelMuted px-3 py-1 text-xs font-medium text-of-muted">Static review flow</span>
+            <span class="of-badge of-badge--accent">First-run setup</span>
+            <span class="of-badge of-badge--neutral">Static review flow</span>
           </div>
-          <div class="mt-5 flex items-start gap-4">
-            <img class="h-auto w-32 shrink-0 sm:w-36" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
-            <div class="min-w-0 space-y-3">
+
+          <div class="mt-5 of-brand-row">
+            <img class="h-auto w-28 shrink-0 sm:w-32" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+            <div class="of-masthead__body min-w-0">
               <p class="text-xs font-semibold uppercase tracking-label text-of-muted">OpenFiltr control plane</p>
-              <h1 class="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl" id="setup-title">Create the first admin account</h1>
-              <p class="max-w-xl text-sm leading-6 text-of-muted sm:text-base">This install does not have an administrator yet. Create the first account, review the completion state, then move into the dashboard slice.</p>
+              <h1 class="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.5rem]" id="setup-title">Create the first admin account</h1>
+              <p class="max-w-2xl text-sm leading-6 text-of-muted sm:text-base">Create the initial operator account, review the completion hand-off, then move into the dashboard shell. The aim is clarity, not onboarding theatre.</p>
+              <p class="of-inline-note max-w-2xl">No credentials are stored. Submitting only changes the static mock-up state so reviewers can judge the flow.</p>
             </div>
           </div>
         </header>
@@ -41,15 +43,12 @@
 
           <section class="setup-step mt-6 grid gap-6" data-step="admin-account" data-step-panel="admin-account">
             <div class="flex flex-wrap items-start justify-between gap-4">
-              <div>
+              <div class="min-w-0">
                 <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Step 1 of 2</p>
                 <h2 class="of-section-heading mt-2 text-2xl font-semibold tracking-tight text-slate-950">Admin account details</h2>
-                <p class="mt-2 max-w-2xl text-sm leading-6 text-of-muted">Keep this account for operational access. The prototype only advances once the inputs are valid.</p>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-of-muted">This account stays reserved for operational access. The prototype only advances when the fields are valid.</p>
               </div>
-              <div class="rounded-[1rem] border border-of-line bg-of-panelMuted px-4 py-3 text-sm text-of-muted">
-                <p class="font-semibold text-slate-900">Security note</p>
-                <p class="mt-1">Passwords still require at least eight characters in this static flow.</p>
-              </div>
+              <p class="of-inline-note max-w-sm">Passwords still require at least eight characters in this review slice.</p>
             </div>
 
             <div class="rounded-control border border-of-danger/20 bg-of-dangerSoft px-4 py-3 text-sm font-medium text-of-danger form-notice form-notice--danger" role="alert" aria-live="polite" data-review-state="validation-error" data-validation-summary hidden>
@@ -79,7 +78,7 @@
               </div>
 
               <div class="flex flex-col gap-3 border-t border-of-line pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-sm leading-6 text-of-muted">Submitting only changes the mock-up state. No credentials are stored.</p>
+                <p class="text-sm leading-6 text-of-muted">Use the button to move the prototype forward. There is no backend write behind this step.</p>
                 <button class="of-button of-button--primary inline-flex min-h-12 items-center justify-center rounded-control border border-of-accent bg-of-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-of-accentStrong" type="submit">Create admin account</button>
               </div>
             </form>
@@ -101,46 +100,48 @@
             </div>
 
             <div class="grid gap-3 sm:grid-cols-2">
-              <button class="of-button of-button--secondary inline-flex min-h-12 items-center justify-center rounded-control border border-of-line bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-of-lineStrong hover:bg-of-panelMuted" type="button" data-import-config>Import config</button>
+              <a class="of-button of-button--secondary inline-flex min-h-12 items-center justify-center rounded-control border border-of-line bg-white px-5 py-3 text-sm font-semibold text-slate-900 no-underline transition hover:border-of-lineStrong hover:bg-of-panelMuted" href="dns-records.html?state=import-preview" data-import-config>Import config</a>
               <a class="of-button of-button--primary inline-flex min-h-12 items-center justify-center rounded-control border border-of-accent bg-of-accent px-5 py-3 text-sm font-semibold text-white no-underline transition hover:bg-of-accentStrong hover:text-white" href="dashboard.html" data-continue-dashboard>Continue to dashboard</a>
-            </div>
-
-            <div class="rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm text-of-muted form-notice form-notice--muted" aria-live="polite" data-import-stub hidden>
-              Import config is not wired in this prototype. It stays in the setup flow.
             </div>
           </section>
         </section>
       </section>
 
-      <aside class="space-y-6">
-        <section class="of-panel rounded-panel border border-of-line bg-slate-950 p-6 text-slate-100 shadow-panel sm:p-7">
-          <p class="text-xs font-semibold uppercase tracking-label text-slate-300">What this screen proves</p>
-          <ul class="mt-4 space-y-3 text-sm leading-6 text-slate-200">
-            <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 rounded-full bg-of-accent"></span>
-              <span>The product shell and controls already match the login and dashboard surfaces.</span>
+      <aside class="grid gap-4">
+        <section class="of-review-panel rounded-panel border border-of-line p-5 sm:p-6">
+          <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Review notes</p>
+          <ul class="of-review-list">
+            <li class="of-review-item">
+              <strong>Shell</strong>
+              <span>The setup screen should feel like the same product surface as login and dashboard, not a special one-off onboarding page.</span>
             </li>
-            <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 rounded-full bg-of-success"></span>
-              <span>The completion step stays in-flow instead of dumping the reviewer into a disconnected success card.</span>
+            <li class="of-review-item">
+              <strong>Flow</strong>
+              <span>The completion step stays in-line and points straight into the product rather than dumping the reviewer into a detached success card.</span>
             </li>
-            <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 rounded-full bg-of-warning"></span>
-              <span>`?state=validation-error` still exposes the review state immediately.</span>
+            <li class="of-review-item">
+              <strong>State</strong>
+              <span><code class="of-inline-code">?state=validation-error</code> still exposes the forced failure state immediately.</span>
             </li>
           </ul>
         </section>
 
-        <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+        <section class="of-panel of-panel--soft rounded-panel border border-of-line p-5 sm:p-6">
           <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Next screens</p>
-          <div class="mt-4 grid gap-3">
-            <a class="of-button of-button--ghost inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-white" href="login.html">
-              <span>Review login</span>
-              <span class="text-xs uppercase tracking-label text-of-muted">Auth</span>
+          <div class="mt-4 of-link-list">
+            <a class="of-link-row" href="login.html">
+              <span class="of-link-row__copy">
+                <span class="of-link-row__title">Review login</span>
+                <span class="of-link-row__body">Move into the quieter auth surface and check the seeded sign-in error.</span>
+              </span>
+              <span class="of-link-row__meta">Auth</span>
             </a>
-            <a class="of-button of-button--ghost inline-flex min-h-11 items-center justify-between rounded-control border border-of-line bg-of-panelMuted px-4 py-3 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-white" href="index.html">
-              <span>Back to launcher</span>
-              <span class="text-xs uppercase tracking-label text-of-muted">Index</span>
+            <a class="of-link-row" href="index.html">
+              <span class="of-link-row__copy">
+                <span class="of-link-row__title">Back to launcher</span>
+                <span class="of-link-row__body">Return to the internal review index and switch to another seeded path.</span>
+              </span>
+              <span class="of-link-row__meta">Index</span>
             </a>
           </div>
         </section>
@@ -164,8 +165,6 @@
         const form = root.querySelector('[data-setup-form]');
         const summary = root.querySelector('[data-validation-summary]');
         const completeCopy = root.querySelector('[data-complete-copy]');
-        const importButton = root.querySelector('[data-import-config]');
-        const importStub = root.querySelector('[data-import-stub]');
         const fields = {
           username: root.querySelector('[name="username"]'),
           password: root.querySelector('[name="password"]'),
@@ -249,7 +248,6 @@
             ? `Admin account ${username} is ready. Continue to the dashboard or import config first.`
             : 'Admin account is ready. Continue to the dashboard or import config first.';
           setReviewStateClass(root, 'default');
-          setHidden(importStub, true);
           setStep('setup-complete');
         }
 
@@ -285,9 +283,6 @@
           });
         });
 
-        importButton.addEventListener('click', () => {
-          setHidden(importStub, false);
-        });
       });
     }());
   </script>

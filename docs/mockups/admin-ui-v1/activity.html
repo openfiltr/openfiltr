@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenFiltr Activity</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23178792'/%3E%3C/svg%3E">
+  <script src="theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-of-canvas text-of-ink antialiased">
+  <main class="of-shell mx-auto min-h-screen max-w-shell px-4 py-4 sm:px-6 lg:px-8" data-page="activity">
+    <div class="absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(circle_at_top_left,_rgba(0,105,255,0.14),_transparent_45%),linear-gradient(180deg,_rgba(237,243,251,0.95)_0%,_rgba(245,248,252,0.45)_58%,_rgba(245,248,252,1)_100%)]"></div>
+
+    <div class="of-app-shell">
+      <header class="of-topbar rounded-[1.2rem] border border-white/70 bg-white/90 p-4 shadow-topbar backdrop-blur sm:p-5">
+        <div class="of-page-hero">
+          <div class="of-toolbar">
+            <div class="of-toolbar__copy">
+              <div class="flex items-start gap-4">
+                <img class="h-auto w-14 shrink-0 sm:w-16" src="assets/openfiltr-logo.svg" alt="OpenFiltr logo">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold uppercase tracking-label text-of-accentStrong">OpenFiltr control plane</p>
+                  <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950" data-page-title>Recent activity</h1>
+                  <p class="mt-2 max-w-3xl text-sm leading-6 text-of-muted" data-page-copy>Inspect the latest resolver decisions, then jump straight into policy work.</p>
+                </div>
+              </div>
+            </div>
+            <div class="grid gap-3 sm:justify-items-end">
+              <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                <span class="of-badge of-badge--neutral">Production</span>
+                <span class="of-badge of-badge--accent" data-filter-badge>All traffic</span>
+              </div>
+              <a class="of-button of-button--ghost inline-flex min-h-10 items-center justify-center rounded-control border border-of-line bg-white px-4 py-2 text-sm font-semibold text-of-accentStrong no-underline transition hover:border-of-lineStrong hover:bg-of-panelMuted" href="index.html">Back to launcher</a>
+            </div>
+          </div>
+          <div class="of-page-context" data-context-cards aria-label="Activity context"></div>
+        </div>
+      </header>
+
+      <div class="of-app-shell__body">
+        <aside class="of-side-nav">
+          <div class="of-side-nav__section">
+            <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Navigate</p>
+            <a class="of-side-nav__link" href="dashboard.html">
+              <span class="of-side-nav__title">Overview</span>
+              <span class="of-side-nav__meta">Return to the triage surface.</span>
+            </a>
+            <a class="of-side-nav__link is-active" href="activity.html">
+              <span class="of-side-nav__title">Activity</span>
+              <span class="of-side-nav__meta">Inspect recent resolver decisions.</span>
+            </a>
+            <a class="of-side-nav__link" href="dns-records.html">
+              <span class="of-side-nav__title">DNS records</span>
+              <span class="of-side-nav__meta">Manage authoritative records.</span>
+            </a>
+            <a class="of-side-nav__link" href="allow-list.html">
+              <span class="of-side-nav__title">Allow list</span>
+              <span class="of-side-nav__meta">Review explicit exceptions.</span>
+            </a>
+            <a class="of-side-nav__link" href="block-list.html">
+              <span class="of-side-nav__title">Block list</span>
+              <span class="of-side-nav__meta">Manage enforced domains.</span>
+            </a>
+          </div>
+        </aside>
+
+        <section class="grid gap-5">
+          <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+            <div class="of-filter-bar">
+              <div class="of-filter-bar__copy">
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Filters</p>
+                <h2 class="of-section-heading text-xl font-semibold tracking-tight text-slate-950">Traffic slice</h2>
+              </div>
+              <div class="of-chip-row">
+                <a class="of-chip" data-filter-link="all" href="activity.html">All traffic</a>
+                <a class="of-chip" data-filter-link="blocked" href="activity.html?filter=blocked">Blocked only</a>
+                <a class="of-chip" data-filter-link="allowed" href="activity.html?filter=allowed">Allowed only</a>
+              </div>
+            </div>
+          </section>
+
+          <div class="of-data-grid">
+            <section class="of-panel rounded-panel border border-of-line bg-white p-6 shadow-panel">
+              <div class="of-toolbar">
+                <div class="of-toolbar__copy">
+                  <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Resolver feed</p>
+                  <h2 class="of-section-heading text-xl font-semibold tracking-tight text-slate-950">Recent activity</h2>
+                  <p class="text-sm leading-6 text-of-muted">Each row shows the domain, client, action, and matched rule that drove the decision.</p>
+                </div>
+                <div class="of-info-row">
+                  <button class="of-info-trigger" type="button" data-info-term="matched rule" aria-expanded="false" aria-controls="activity-info-panel">
+                    <span aria-hidden="true">i</span>
+                    <span class="sr-only">Explain matched rule</span>
+                  </button>
+                  <div class="of-info-panel" id="activity-info-panel" data-info-panel hidden></div>
+                </div>
+              </div>
+
+              <div class="of-empty-stack mt-5" data-empty-state hidden>
+                <p class="font-semibold text-slate-900">Nothing to review yet.</p>
+                <p class="text-sm leading-6 text-of-muted" data-empty-copy></p>
+              </div>
+
+              <ul class="of-data-list" data-activity-list aria-label="Recent activity list"></ul>
+            </section>
+
+            <aside class="grid gap-5">
+              <section class="of-panel of-panel--soft rounded-panel border border-of-line p-5 shadow-panel">
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Selected event</p>
+                <div class="of-detail-card mt-3" data-detail-card>
+                  <h3 class="of-section-heading text-lg font-semibold tracking-tight text-slate-950" data-detail-domain>ads.example.net</h3>
+                  <dl class="of-detail-list mt-4">
+                    <div>
+                      <dt>Action</dt>
+                      <dd data-detail-action>Blocked</dd>
+                    </div>
+                    <div>
+                      <dt>Client</dt>
+                      <dd data-detail-client>Kitchen tablet</dd>
+                    </div>
+                    <div>
+                      <dt>Matched rule</dt>
+                      <dd data-detail-rule>Default block policy</dd>
+                    </div>
+                    <div>
+                      <dt>Resolver</dt>
+                      <dd data-detail-resolver>resolver-lon1-02</dd>
+                    </div>
+                  </dl>
+                  <p class="mt-4 text-sm leading-6 text-of-muted" data-detail-note>Seen repeatedly from a single managed client.</p>
+                </div>
+              </section>
+
+              <section class="of-panel rounded-panel border border-of-line bg-white p-5 shadow-panel">
+                <p class="text-xs font-semibold uppercase tracking-label text-of-muted">Actions</p>
+                <div class="of-link-list mt-3">
+                  <a class="of-link-row" data-allow-link href="allow-list.html?state=add-rule&domain=ads.example.net">
+                    <span class="of-link-row__copy">
+                      <span class="of-link-row__title">Allow domain</span>
+                      <span class="of-link-row__body">Promote the inspected domain into an exception if this block is too broad.</span>
+                    </span>
+                    <span class="of-link-row__meta">Policy</span>
+                  </a>
+                  <a class="of-link-row" data-block-link href="block-list.html?state=add-rule&domain=ads.example.net">
+                    <span class="of-link-row__copy">
+                      <span class="of-link-row__title">Block domain</span>
+                      <span class="of-link-row__body">Open the enforcement flow with the domain prefilled from the current event.</span>
+                    </span>
+                    <span class="of-link-row__meta">Policy</span>
+                  </a>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="prototype.js"></script>
+  <script src="mock-data.js"></script>
+  <script>
+    (function () {
+      const prototype = window.OpenFiltrPrototype;
+      if (!prototype) {
+        return;
+      }
+
+      prototype.bootPage(({ state, getQueryParam, setHidden, setReviewStateClass }) => {
+        const root = document.querySelector('[data-page="activity"]');
+        const filter = getQueryParam('filter') || 'all';
+        const data = prototype.resolveActivityData(state, filter);
+        const list = root.querySelector('[data-activity-list]');
+        const emptyState = root.querySelector('[data-empty-state]');
+        const emptyCopy = root.querySelector('[data-empty-copy]');
+        const title = root.querySelector('[data-page-title]');
+        const copy = root.querySelector('[data-page-copy]');
+        const badge = root.querySelector('[data-filter-badge]');
+        const contextCards = root.querySelector('[data-context-cards]');
+        const allowLink = root.querySelector('[data-allow-link]');
+        const blockLink = root.querySelector('[data-block-link]');
+        const infoTriggers = Array.from(root.querySelectorAll('[data-info-term]'));
+        const infoPanel = root.querySelector('[data-info-panel]');
+        const detailNodes = {
+          domain: root.querySelector('[data-detail-domain]'),
+          action: root.querySelector('[data-detail-action]'),
+          client: root.querySelector('[data-detail-client]'),
+          rule: root.querySelector('[data-detail-rule]'),
+          resolver: root.querySelector('[data-detail-resolver]'),
+          note: root.querySelector('[data-detail-note]'),
+        };
+
+        function renderContextCards(cards) {
+          contextCards.innerHTML = '';
+
+          cards.forEach((card) => {
+            const item = document.createElement('article');
+            item.className = `of-context-card${card.tone ? ` of-context-card--${card.tone}` : ''}`;
+            item.innerHTML = [
+              `<p class="of-context-card__label">${card.label}</p>`,
+              `<p class="of-context-card__value">${card.value}</p>`,
+              `<p class="of-context-card__detail">${card.detail}</p>`,
+            ].join('');
+            contextCards.appendChild(item);
+          });
+        }
+
+        function renderDetail(item) {
+          if (!item) {
+            detailNodes.domain.textContent = 'No event selected';
+            detailNodes.action.textContent = 'Waiting';
+            detailNodes.client.textContent = 'N/A';
+            detailNodes.rule.textContent = 'N/A';
+            detailNodes.resolver.textContent = 'N/A';
+            detailNodes.note.textContent = 'Select an activity row once traffic is available.';
+            allowLink.href = 'allow-list.html?state=add-rule';
+            blockLink.href = 'block-list.html?state=add-rule';
+            return;
+          }
+
+          detailNodes.domain.textContent = item.domain;
+          detailNodes.action.textContent = item.action;
+          detailNodes.client.textContent = item.client;
+          detailNodes.rule.textContent = item.rule;
+          detailNodes.resolver.textContent = item.resolver;
+          detailNodes.note.textContent = item.note;
+          allowLink.href = item.recommend.allowHref;
+          blockLink.href = item.recommend.blockHref;
+        }
+
+        title.textContent = data.title;
+        copy.textContent = data.copy;
+        badge.textContent = filter === 'blocked' ? 'Blocked only' : filter === 'allowed' ? 'Allowed only' : 'All traffic';
+        setReviewStateClass(root, state);
+        prototype.bindInfoPanelGroup({ panel: infoPanel, triggers: infoTriggers });
+
+        const uniqueClients = new Set(data.items.map((item) => item.client)).size;
+        const leadItem = data.items[0];
+        const filterSummary = filter === 'blocked'
+          ? 'Blocked traffic only'
+          : filter === 'allowed'
+            ? 'Allowed traffic only'
+            : 'Mixed resolver traffic';
+
+        renderContextCards([
+          {
+            label: filter === 'blocked' ? 'Blocked in view' : filter === 'allowed' ? 'Allowed in view' : 'Events in view',
+            value: data.items.length ? `${data.items.length} events` : 'No events',
+            detail: `${filterSummary} for this review slice.`,
+            tone: filter === 'blocked' ? 'warning' : filter === 'allowed' ? 'success' : 'accent',
+          },
+          {
+            label: 'Clients involved',
+            value: uniqueClients ? `${uniqueClients} clients` : 'Waiting for traffic',
+            detail: leadItem ? `${leadItem.client} generated the latest visible decision.` : 'The activity rail will populate once the resolver sees requests.',
+          },
+          {
+            label: 'Next action',
+            value: leadItem ? leadItem.domain : 'No domain selected',
+            detail: leadItem ? 'Use the allow or block links to prefill policy work from the selected event.' : 'Policy shortcuts stay dormant until an event is selected.',
+            tone: leadItem && leadItem.action === 'Blocked' ? 'danger' : 'accent',
+          },
+        ]);
+
+        root.querySelectorAll('[data-filter-link]').forEach((link) => {
+          if (link.getAttribute('data-filter-link') === filter) {
+            link.classList.add('is-active');
+          }
+        });
+
+        list.innerHTML = '';
+        if (!data.items.length) {
+          emptyCopy.textContent = data.emptyState;
+          setHidden(emptyState, false);
+          renderDetail(null);
+          return;
+        }
+
+        setHidden(emptyState, true);
+        data.items.forEach((item, index) => {
+          const row = document.createElement('li');
+          row.className = 'of-list-row';
+          row.tabIndex = 0;
+
+          const main = document.createElement('div');
+          main.className = 'of-list-row__main';
+
+          const titleNode = document.createElement('p');
+          titleNode.className = 'of-list-title';
+          titleNode.textContent = item.domain;
+
+          const metaNode = document.createElement('p');
+          metaNode.className = 'of-list-meta';
+          metaNode.textContent = `${item.client} • ${item.category} • ${item.queryType}`;
+
+          main.appendChild(titleNode);
+          main.appendChild(metaNode);
+
+          const side = document.createElement('div');
+          side.className = 'of-list-row__side';
+
+          const badgeNode = document.createElement('span');
+          badgeNode.className = prototype.getBadgeClassName(item.actionTone);
+          badgeNode.textContent = item.action;
+
+          const detailNode = document.createElement('p');
+          detailNode.className = 'of-list-meta';
+          detailNode.textContent = `${item.time} • ${item.rule}`;
+
+          side.appendChild(badgeNode);
+          side.appendChild(detailNode);
+          row.appendChild(main);
+          row.appendChild(side);
+          row.addEventListener('click', () => renderDetail(item));
+          row.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              renderDetail(item);
+            }
+          });
+
+          list.appendChild(row);
+
+          if (index === 0) {
+            renderDetail(item);
+          }
+        });
+      });
+    }());
+  </script>
+</body>
+</html>
