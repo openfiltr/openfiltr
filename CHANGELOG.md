@@ -6,10 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Architecture Decision Records (ADRs) directory at `docs/adr/` with a README template and an index. Two initial ADRs document the PostgreSQL-only storage decision (ADR-0001) and the agent pre-task protocol (ADR-0002).
+- Automated changelog update workflow (`.github/workflows/changelog-update.yml`): on every PR merge to `main`, a structured GitHub issue is created and assigned to the Copilot coding agent, prompting it to append an entry to `CHANGELOG.md` with full PR context (title, author, merge date, description).
+
 ### Changed
 
+- `AGENTS.md` and `.github/copilot-instructions/project.md` updated with a mandatory pre-task protocol: AI coding agents must sync with `main`, read `CHANGELOG.md`, read all ADRs, and run `go test ./...` before making any code changes.
 - Replaced SQLite storage with PostgreSQL-backed configuration and runtime support.
-- Added root agent guidance for repository-aware coding agents.
 
 ## [0.1.0] — 2026-03-18
 

@@ -1,0 +1,120 @@
+name: Changelog Update
+
+# Triggers whenever a pull request is merged into main.
+# Creates a structured GitHub issue for the Copilot coding agent to append
+# an entry to CHANGELOG.md, giving future agents (and humans) a clear,
+# append-only record of what changed, why, and when.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  request-changelog-update:
+    name: Request Changelog Update
+    # Only run when the PR was actually merged, not just closed.
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ensure changelog label exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "changelog" \
+            --repo "${{ github.repository }}" \
+            --description "Changelog update request for Copilot agent" \
+            --color "0075ca" \
+            2>/dev/null || true
+
+      - name: Build issue body
+        id: body
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ', ') }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, textwrap
+
+          pr_number   = os.environ.get("PR_NUMBER", "")
+          pr_title    = os.environ.get("PR_TITLE", "")
+          pr_body     = os.environ.get("PR_BODY", "*(no description provided)*")
+          pr_author   = os.environ.get("PR_AUTHOR", "")
+          pr_merged   = os.environ.get("PR_MERGED_AT", "")
+          pr_labels   = os.environ.get("PR_LABELS", "")
+          pr_url      = os.environ.get("PR_URL", "")
+
+          body = textwrap.dedent(f"""\
+          ## Changelog Update Request
+
+          Pull request **#{pr_number}** has been merged into `main`. Please update `CHANGELOG.md` by appending a concise, informative entry under the `## [Unreleased]` section.
+
+          ### Merged pull request details
+
+          | Field | Value |
+          |-------|-------|
+          | PR | [#{pr_number}]({pr_url}) — {pr_title} |
+          | Author | @{pr_author} |
+          | Merged at | {pr_merged} |
+          | Labels | {pr_labels} |
+
+          ### PR description
+
+          {pr_body}
+
+          ### Instructions
+
+          1. Read `CHANGELOG.md` to understand the existing format and the most recent entries.
+          2. Determine the appropriate changelog category based on the PR content:
+             - **Added** — new features or capabilities
+             - **Changed** — changes to existing behaviour
+             - **Deprecated** — features that will be removed in a future release
+             - **Removed** — features removed in this release
+             - **Fixed** — bug fixes
+             - **Security** — security-related changes
+          3. Append a single bullet point (or a small group of related bullets) under `## [Unreleased]` → the appropriate category heading. Create the heading if it does not already exist.
+          4. **Append only** — do not edit, reorder, or remove any existing changelog entries.
+          5. Write the entry in British English.
+          6. Include enough context for a future AI agent to understand *what* changed, *why* it changed, and *when* it merged (use the merged-at date above).
+          7. Commit the updated `CHANGELOG.md` with a message such as: `docs(changelog): record PR #{pr_number} — {pr_title}`
+          8. Close this issue once the changelog has been updated.
+
+          > **Note for agents**: follow the pre-task protocol in `AGENTS.md` before making any changes — sync with `main`, re-read the changelog, and run `go test ./...` to confirm the baseline is still passing.
+          """)
+
+          with open("/tmp/issue_body.md", "w") as f:
+              f.write(body)
+          print("Issue body written to /tmp/issue_body.md")
+          PYEOF
+
+          echo "body_file=/tmp/issue_body.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create issue for Copilot coding agent
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "chore: update CHANGELOG for PR #${PR_NUMBER} — ${PR_TITLE}" \
+            --body-file "${{ steps.body.outputs.body_file }}" \
+            --assignee "copilot" \
+            --label "changelog" \
+            2>/dev/null \
+          || \
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "chore: update CHANGELOG for PR #${PR_NUMBER} — ${PR_TITLE}" \
+            --body-file "${{ steps.body.outputs.body_file }}" \
+            --label "changelog"
