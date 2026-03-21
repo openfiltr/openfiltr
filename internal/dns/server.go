@@ -6,22 +6,32 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 
+	pq "github.com/lib/pq"
 	mdns "github.com/miekg/dns"
 	"github.com/openfiltr/openfiltr/internal/config"
 	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
 type Server struct {
-	cfg    *config.Config
-	db     *sql.DB
-	server *mdns.Server
+	cfg        *config.Config
+	db         *sql.DB
+	server     *mdns.Server
+	regexMu    sync.RWMutex
+	regexCache map[string]cachedRegexp
+}
+
+type cachedRegexp struct {
+	re  *regexp.Regexp
+	err error
 }
 
 func NewServer(cfg *config.Config, db *sql.DB) *Server {
-	return &Server{cfg: cfg, db: db}
+	return &Server{cfg: cfg, db: db, regexCache: make(map[string]cachedRegexp)}
 }
 
 func (s *Server) Start() error {
@@ -48,7 +58,7 @@ func (s *Server) handle(w mdns.ResponseWriter, r *mdns.Msg) {
 	clientIP, _, _ := net.SplitHostPort(w.RemoteAddr().String())
 
 	for _, q := range r.Question {
-		domain := strings.TrimSuffix(strings.ToLower(q.Name), ".")
+		domain := normaliseDomain(q.Name)
 		qtype := mdns.TypeToString[q.Qtype]
 		action := "allowed"
 
@@ -74,9 +84,103 @@ func (s *Server) handle(w mdns.ResponseWriter, r *mdns.Msg) {
 }
 
 func (s *Server) isBlocked(domain string) bool {
-	var n int
-	_ = s.db.QueryRow(storage.Rebind(`SELECT COUNT(*) FROM block_rules WHERE enabled=1 AND (pattern=? OR pattern='*.'||? OR (rule_type='wildcard' AND ? LIKE REPLACE(pattern,'*','%')))`), domain, domain, domain).Scan(&n)
-	return n > 0
+	domain = normaliseDomain(domain)
+	if domain == "" {
+		return false
+	}
+
+	if s.hasExactBlockRule(domain) {
+		return true
+	}
+	if s.hasWildcardBlockRule(domain) {
+		return true
+	}
+	return s.hasRegexBlockRule(domain)
+}
+
+func (s *Server) hasExactBlockRule(domain string) bool {
+	var exists bool
+	if err := s.db.QueryRow(storage.Rebind(`SELECT EXISTS(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower(pattern)=?)`), domain).Scan(&exists); err != nil {
+		return false
+	}
+	return exists
+}
+
+func (s *Server) hasWildcardBlockRule(domain string) bool {
+	patterns := wildcardPatterns(domain)
+	if len(patterns) == 0 {
+		return false
+	}
+
+	var exists bool
+	if err := s.db.QueryRow(storage.Rebind(`SELECT EXISTS(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower(pattern) = ANY(?))`), pq.Array(patterns)).Scan(&exists); err != nil {
+		return false
+	}
+	return exists
+}
+
+func (s *Server) hasRegexBlockRule(domain string) bool {
+	rows, err := s.db.Query(`SELECT pattern FROM block_rules WHERE enabled=1 AND rule_type='regex'`)
+	if err != nil {
+		return false
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var pattern string
+		if err := rows.Scan(&pattern); err != nil {
+			continue
+		}
+		re, err := s.compiledRegex(pattern)
+		if err != nil {
+			slog.Warn("invalid block rule regex", "pattern", pattern, "err", err)
+			continue
+		}
+		if re.MatchString(domain) {
+			return true
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		slog.Warn("error iterating regex block rules", "err", err)
+		return false
+	}
+
+	return false
+}
+
+func wildcardPatterns(domain string) []string {
+	labels := strings.Split(domain, ".")
+	if len(labels) < 2 {
+		return nil
+	}
+
+	patterns := make([]string, 0, len(labels)-1)
+	for i := 1; i < len(labels); i++ {
+		patterns = append(patterns, "*."+strings.Join(labels[i:], "."))
+	}
+	return patterns
+}
+
+func normaliseDomain(domain string) string {
+	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+}
+
+func (s *Server) compiledRegex(pattern string) (*regexp.Regexp, error) {
+	s.regexMu.RLock()
+	cached, ok := s.regexCache[pattern]
+	s.regexMu.RUnlock()
+	if ok {
+		return cached.re, cached.err
+	}
+
+	re, err := regexp.Compile("(?i)" + pattern)
+
+	s.regexMu.Lock()
+	s.regexCache[pattern] = cachedRegexp{re: re, err: err}
+	s.regexMu.Unlock()
+
+	return re, err
 }
 
 func (s *Server) localEntries(domain string, qtype uint16) []mdns.RR {
