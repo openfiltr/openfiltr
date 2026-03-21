@@ -44,9 +44,9 @@ func TestIsBlockedMatchesExactRulesCaseInsensitively(t *testing.T) {
 	srv, mock, cleanup := newMockServer(t)
 	defer cleanup()
 
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower\(pattern\)=\$1`).
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower\(pattern\)=\$1\)`).
 		WithArgs("example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
 	if !srv.isBlocked("Example.COM.") {
 		t.Fatal("isBlocked() = false, want true")
@@ -59,12 +59,12 @@ func TestIsBlockedMatchesWildcardRulesForSubdomainsOnly(t *testing.T) {
 	srv, mock, cleanup := newMockServer(t)
 	defer cleanup()
 
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower\(pattern\)=\$1`).
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower\(pattern\)=\$1\)`).
 		WithArgs("foo.example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower\(pattern\) = ANY\(\$1\)`).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower\(pattern\) = ANY\(\$1\)\)`).
 		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
 	if !srv.isBlocked("foo.example.com") {
 		t.Fatal("isBlocked() = false, want true")
@@ -77,12 +77,12 @@ func TestIsBlockedDoesNotMatchWildcardAgainstApexDomain(t *testing.T) {
 	srv, mock, cleanup := newMockServer(t)
 	defer cleanup()
 
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower\(pattern\)=\$1`).
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower\(pattern\)=\$1\)`).
 		WithArgs("example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower\(pattern\) = ANY\(\$1\)`).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower\(pattern\) = ANY\(\$1\)\)`).
 		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 	mock.ExpectQuery(`SELECT pattern FROM block_rules WHERE enabled=1 AND rule_type='regex'`).
 		WillReturnRows(sqlmock.NewRows([]string{"pattern"}))
 
@@ -97,12 +97,12 @@ func TestIsBlockedMatchesRegexRulesCaseInsensitively(t *testing.T) {
 	srv, mock, cleanup := newMockServer(t)
 	defer cleanup()
 
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower\(pattern\)=\$1`).
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower\(pattern\)=\$1\)`).
 		WithArgs("api.example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower\(pattern\) = ANY\(\$1\)`).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower\(pattern\) = ANY\(\$1\)\)`).
 		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 	mock.ExpectQuery(`SELECT pattern FROM block_rules WHERE enabled=1 AND rule_type='regex'`).
 		WillReturnRows(sqlmock.NewRows([]string{"pattern"}).AddRow(`^api\.example\.com$`))
 
