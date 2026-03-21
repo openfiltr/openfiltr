@@ -342,7 +342,7 @@ function ensureLookahead(p, rounds) {
   for (let round = 0; round < rounds; round++) {
     const futureHasClear = PIECE_DEFS.some(pc => canCauseClearOnBoard(pc, b));
     if (!futureHasClear) {
-      // Future board is too dense — inject a clear-enabling piece into current rack
+      // Future board is too dense, inject a clear-enabling piece into current rack
       // canCauseClear(pc) implies canPlaceAnywhere(pc), so no separate placement check needed
       const clearNow = PIECE_DEFS.find(pc => canCauseClear(pc));
       if (clearNow) {
@@ -423,7 +423,7 @@ function applyColor(name) {
 function applyDarkMode(on) {
   document.documentElement.dataset.theme = on ? 'dark' : '';
   document.querySelector('meta[name="theme-color"]')
-    .setAttribute('content', on ? '#1c1c1e' : '#f2f2f7');
+    .setAttribute('content', on ? '#2f2722' : '#f6f1e8');
 }
 
 function applyExtendedPieces(on) {
@@ -553,7 +553,7 @@ function renderSlot(i) {
 
   slot.appendChild(inner);
 
-  // Slot number label — helps players match hint text ("play slot 2 first") to the rack
+  // Slot number label, helps players match hint text ("play slot 2 first") to the rack
   const label = document.createElement('span');
   label.className = 'slot-label';
   label.textContent = String(i + 1);
@@ -1085,11 +1085,11 @@ function updateTrainingPanel() {
 }
 
 function strategyNote(holes, lanes, centre) {
-  if (holes > 4)   return '⚠️ Many isolated holes — avoid blocking empty cells.';
-  if (centre > 6)  return '⚠️ Centre is congested — try to clear those boxes soon.';
-  if (lanes < 4)   return '⚠️ Few open lanes — prioritise clearing rows/cols.';
+  if (holes > 4)   return '⚠️ Many isolated holes, avoid blocking empty cells.';
+  if (centre > 6)  return '⚠️ Centre is congested, try to clear those boxes soon.';
+  if (lanes < 4)   return '⚠️ Few open lanes, prioritise clearing rows and columns.';
   if (combo > 2)   return `🔥 ${combo}× combo! Keep clearing to maximise score.`;
-  if (holes === 0 && lanes >= 12) return '✅ Clean board — build towards a multi-clear.';
+  if (holes === 0 && lanes >= 12) return '✅ Clean board, build towards a multi-clear.';
   return '💡 Look for placements that complete a full row, column or 3×3 box.';
 }
 
@@ -1265,17 +1265,17 @@ function explainMove(cells, row, col) {
   const hAfter  = countHoles(after);
   const newHoles = hAfter - hBefore;
 
-  if (clrs.total >= 3) return `✅ Best move — clears ${clrs.total} regions at once!`;
-  if (clrs.total === 2) return `✅ Great — clears ${clrs.total} regions simultaneously.`;
+  if (clrs.total >= 3) return `✅ Best move, clears ${clrs.total} regions at once!`;
+  if (clrs.total === 2) return `✅ Great, clears ${clrs.total} regions simultaneously.`;
   if (clrs.total === 1) {
     if (newHoles > 1) return `⚠️ Clears a region but creates ${newHoles} holes.`;
-    return '✅ Clears a region — good for score and space.';
+    return '✅ Clears a region, good for score and space.';
   }
-  if (newHoles > 2)   return `⚠️ Risky — creates ${newHoles} isolated holes.`;
+  if (newHoles > 2)   return `⚠️ Risky, creates ${newHoles} isolated holes.`;
   if (newHoles > 0)   return `⚠️ Creates ${newHoles} hole(s). Consider alternatives.`;
   if (countOpenLanes(after) >= countOpenLanes(board))
-    return '✅ Safe — preserves open lanes for future pieces.';
-  return '💡 Neutral placement — no immediate clears or major penalties.';
+    return '✅ Safe, preserves open lanes for future pieces.';
+  return '💡 Neutral placement, no immediate clears or major penalties.';
 }
 
 // ── Animation helpers ──────────────────────────────────────
