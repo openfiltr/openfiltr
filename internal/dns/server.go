@@ -99,11 +99,11 @@ func (s *Server) isBlocked(domain string) bool {
 }
 
 func (s *Server) hasExactBlockRule(domain string) bool {
-	var n int
-	if err := s.db.QueryRow(storage.Rebind(`SELECT COUNT(*) FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower(pattern)=?`), domain).Scan(&n); err != nil {
+	var exists bool
+	if err := s.db.QueryRow(storage.Rebind(`SELECT EXISTS(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower(pattern)=?)`), domain).Scan(&exists); err != nil {
 		return false
 	}
-	return n > 0
+	return exists
 }
 
 func (s *Server) hasWildcardBlockRule(domain string) bool {
@@ -112,11 +112,11 @@ func (s *Server) hasWildcardBlockRule(domain string) bool {
 		return false
 	}
 
-	var n int
-	if err := s.db.QueryRow(storage.Rebind(`SELECT COUNT(*) FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower(pattern) = ANY(?)`), pq.Array(patterns)).Scan(&n); err != nil {
+	var exists bool
+	if err := s.db.QueryRow(storage.Rebind(`SELECT EXISTS(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower(pattern) = ANY(?))`), pq.Array(patterns)).Scan(&exists); err != nil {
 		return false
 	}
-	return n > 0
+	return exists
 }
 
 func (s *Server) hasRegexBlockRule(domain string) bool {
@@ -139,6 +139,11 @@ func (s *Server) hasRegexBlockRule(domain string) bool {
 		if re.MatchString(domain) {
 			return true
 		}
+	}
+
+	if err := rows.Err(); err != nil {
+		slog.Warn("error iterating regex block rules", "err", err)
+		return false
 	}
 
 	return false
