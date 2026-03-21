@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- PR #93, merged on 2026-03-21, added exact, wildcard, apex-domain, and regex block rule matching in the DNS server, normalised queried domains for lookup, and documented the Codex branch and PR workflow so future agents follow the repository process.
+- Improved DNS server block rule matching (exact, wildcard, and regex), normalised queried domains for lookup, and documented the Codex branch and PR workflow so future agents follow the repository process.
 
 ## [0.1.0] — 2026-03-18
 
