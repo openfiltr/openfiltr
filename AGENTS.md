@@ -67,6 +67,7 @@ Complete these steps **before making any code changes**:
 - Start non-trivial work from the latest `origin/main`, not from an old feature branch.
 - Create one scoped branch per concern under the `codex/` prefix.
 - Open PRs into `main`; do not stack unrelated work onto an already-open feature PR.
+- If a PR is linked to an issue and that PR is approved, make sure the PR body uses a closing keyword such as `Closes #123` so the issue closes when the PR merges.
 - If a PR branch drifts, merge or rebase the latest `main` into that branch before adding more work.
 - Keep temporary rescue branches exceptional. If branch rules block direct updates, use a replacement branch only long enough to unblock the original PR or replace it cleanly.
 

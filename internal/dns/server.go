@@ -15,16 +15,21 @@ import (
 )
 
 type Server struct {
-	cfg    *config.Config
-	db     *sql.DB
-	server *mdns.Server
+	cfg        *config.Config
+	db         *sql.DB
+	server     *mdns.Server
+	blockRules *blockRuleMatcher
 }
 
 func NewServer(cfg *config.Config, db *sql.DB) *Server {
-	return &Server{cfg: cfg, db: db}
+	return &Server{cfg: cfg, db: db, blockRules: newBlockRuleMatcher(db)}
 }
 
 func (s *Server) Start() error {
+	if err := s.blockRules.prime(); err != nil {
+		return err
+	}
+
 	mux := mdns.NewServeMux()
 	mux.HandleFunc(".", s.handle)
 	s.server = &mdns.Server{Addr: s.cfg.Server.ListenDNS, Net: "udp", Handler: mux}
@@ -74,9 +79,10 @@ func (s *Server) handle(w mdns.ResponseWriter, r *mdns.Msg) {
 }
 
 func (s *Server) isBlocked(domain string) bool {
-	var n int
-	_ = s.db.QueryRow(storage.Rebind(`SELECT COUNT(*) FROM block_rules WHERE enabled=1 AND (pattern=? OR pattern='*.'||? OR (rule_type='wildcard' AND ? LIKE REPLACE(pattern,'*','%')))`), domain, domain, domain).Scan(&n)
-	return n > 0
+	if s.blockRules == nil {
+		s.blockRules = newBlockRuleMatcher(s.db)
+	}
+	return s.blockRules.matches(domain)
 }
 
 func (s *Server) localEntries(domain string, qtype uint16) []mdns.RR {
