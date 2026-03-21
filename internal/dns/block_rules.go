@@ -99,7 +99,7 @@ func (m *blockRuleMatcher) matches(domain string) bool {
 		return false
 	}
 
-	domain = strings.ToLower(strings.TrimSpace(domain))
+	domain = normaliseDomain(domain)
 	if domain == "" {
 		return false
 	}
@@ -131,7 +131,7 @@ func (m *blockRuleMatcher) matches(domain string) bool {
 
 func wildcardMatches(pattern, domain string) bool {
 	pattern = strings.ToLower(strings.TrimSpace(pattern))
-	domain = strings.ToLower(strings.TrimSpace(domain))
+	domain = normaliseDomain(domain)
 
 	if !strings.HasPrefix(pattern, "*.") {
 		return false

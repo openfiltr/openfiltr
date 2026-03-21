@@ -37,6 +37,7 @@ Complete these steps **before making any code changes**:
 - Use `rg` for search.
 - Sign commits with `-s`.
 - Branch names should use the `codex/` prefix.
+- For Codex-specific branch, push, and PR steps, follow `docs/codex-agents/README.md`.
 
 ## Repo Map
 

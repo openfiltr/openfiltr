@@ -53,7 +53,7 @@ func (s *Server) handle(w mdns.ResponseWriter, r *mdns.Msg) {
 	clientIP, _, _ := net.SplitHostPort(w.RemoteAddr().String())
 
 	for _, q := range r.Question {
-		domain := strings.TrimSuffix(strings.ToLower(q.Name), ".")
+		domain := normaliseDomain(q.Name)
 		qtype := mdns.TypeToString[q.Qtype]
 		action := "allowed"
 
@@ -83,6 +83,10 @@ func (s *Server) isBlocked(domain string) bool {
 		s.blockRules = newBlockRuleMatcher(s.db)
 	}
 	return s.blockRules.matches(domain)
+}
+
+func normaliseDomain(domain string) string {
+	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
 }
 
 func (s *Server) localEntries(domain string, qtype uint16) []mdns.RR {
