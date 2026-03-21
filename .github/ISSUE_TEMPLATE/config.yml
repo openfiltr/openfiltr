@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: OpenFiltr issue intake
+    url: https://github.com/openfiltr/openfiltr/issues/new/choose
+    about: Use the provided issue forms so reports stay scoped to OpenFiltr and include the details maintainers need.
