@@ -107,3 +107,27 @@ Complete these steps **before making any code changes**:
 - README and roadmap history may lag behind the code.
 - Storage changes touch many raw SQL call sites.
 - CI and release workflows are part of the product surface here, not afterthoughts.
+
+---
+
+## Ordered implementation queue for Burohame retention work
+
+When the user asks to "implement the next issue", inspect this queue first and pick the first item still listed under **To do**.
+
+After completing one of these items:
+- move it from **To do** to **Completed**
+- preserve the ordering of the remaining items
+- keep issue numbers in the list so future agents can cross-check GitHub
+
+### Completed
+
+- None yet.
+
+### To do
+
+1. `#97` Add persistent metagame state for retention features
+2. `#98` Add coin rewards to the core game loop
+3. `#99` Add a post-run summary that shows progression rewards
+4. `#100` Add unlockable cosmetic themes and a simple shop
+5. `#101` Add daily missions with clear rewards
+6. `#102` Add a daily seeded challenge and streak tracking
