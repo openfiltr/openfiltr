@@ -75,6 +75,8 @@
 
 html, body {
   height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -100,12 +102,13 @@ input {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   max-width: var(--app-width);
   margin: 0 auto;
   padding: clamp(12px, 2.5vw, 28px);
   gap: clamp(12px, 2vw, 20px);
+  overflow: hidden;
 }
 
 #app::before {
@@ -257,6 +260,7 @@ a.icon-btn {
   flex: 1;
   min-height: 0;
   padding: 0 clamp(6px, 1vw, 12px) clamp(8px, 1vw, 12px);
+  overflow: hidden;
 }
 
 #play-shell,
@@ -275,12 +279,14 @@ a.icon-btn {
   gap: 14px;
   padding: clamp(16px, 2vw, 24px);
   min-height: 0;
+  overflow: hidden;
 }
 
 #board-stage {
   display: grid;
   gap: 14px;
   min-height: 0;
+  align-content: start;
 }
 
 .stage-copy {
@@ -884,76 +890,132 @@ input:checked + .tog-track .tog-thumb {
 
 @media (max-width: 720px) {
   #app {
-    padding: 10px;
-    gap: 10px;
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)) 8px;
+    gap: 8px;
   }
 
   #app::before {
-    inset: 4px;
-    border-radius: 28px;
+    inset: 0;
+    border-radius: 0;
+    border-inline: none;
+    border-top: none;
   }
 
   #hdr {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
     gap: 8px;
-    padding: 6px;
+    padding: 2px 2px 0;
   }
 
-  .brand-lockup {
+  .brand-lockup,
+  .stage-copy,
+  .panel-caption,
+  .overlay-intro,
+  .score-label {
     display: none;
   }
 
   #score-wrap {
-    padding: 10px 12px;
-    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 18px;
   }
 
   #score-main {
-    font-size: clamp(1.7rem, 9vw, 2.5rem);
+    font-size: clamp(1.5rem, 8vw, 2.15rem);
   }
 
   #score-sub {
-    gap: 6px;
+    gap: 5px;
+    flex-wrap: nowrap;
   }
 
   .score-chip {
-    padding: 5px 9px;
-    font-size: 0.76rem;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
+
+  #main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 0 0 4px;
   }
 
   #play-shell,
   #rack-panel,
   #coach-panel,
   .ov-card {
-    border-radius: 26px;
+    border-radius: 22px;
   }
 
   #play-shell {
-    padding: 12px;
-    gap: 12px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px;
   }
 
-  .stage-copy {
-    gap: 4px;
-  }
-
-  .stage-note,
-  .panel-caption,
-  #strategy-note,
-  #move-eval,
-  .overlay-intro,
-  .ov-card p {
-    font-size: 0.9rem;
+  #board-stage {
+    align-content: center;
+    justify-items: center;
   }
 
   #board-wrap {
-    width: min(100%, calc(100dvh - 312px));
-    padding: 10px;
+    width: min(100%, calc(100dvh - 206px));
+    max-width: 100%;
+    padding: 8px;
+  }
+
+  #main:has(#coach-panel:not([hidden])) #board-wrap {
+    width: min(100%, calc(100dvh - 300px));
   }
 
   #coach-panel,
   #rack-panel {
-    padding: 14px;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  #coach-panel .panel-heading {
+    gap: 2px;
+  }
+
+  .panel-heading h2,
+  .panel-heading-compact h2 {
+    font-size: 1.02rem;
+  }
+
+  #health-row {
+    gap: 6px;
+  }
+
+  .metric {
+    padding: 6px 8px;
+    font-size: 0.76rem;
+  }
+
+  #strategy-note,
+  #move-eval {
+    font-size: 0.82rem;
+    min-height: 1.2em;
+  }
+
+  #train-btns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pill-btn {
+    padding: 11px 14px;
+    font-size: 0.88rem;
+  }
+
+  #rack-panel {
+    gap: 8px;
   }
 
   #rack {
@@ -961,44 +1023,58 @@ input:checked + .tog-track .tog-thumb {
   }
 
   .slot {
-    min-height: 112px;
-    padding: 10px 6px;
+    min-height: 92px;
+    padding: 8px 4px;
+    gap: 6px;
+    border-radius: 18px;
+  }
+
+  .slot-label {
+    font-size: 0.72rem;
   }
 
   .piece-block,
   .ghost-block {
-    border-radius: 5px;
+    border-radius: 4px;
   }
 
   .icon-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+  }
+
+  .overlay {
+    padding: 16px;
+  }
+
+  .ov-card {
+    padding: 20px;
   }
 }
 
 @media (max-height: 760px) {
   #app {
-    gap: 8px;
+    gap: 6px;
   }
 
   #hdr {
-    padding-block: 4px;
+    padding-block: 2px;
   }
 
   #play-shell,
   #rack-panel,
   #coach-panel {
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   #board-wrap {
-    width: min(100%, calc(100dvh - 286px));
+    width: min(100%, calc(100dvh - 224px));
   }
 
   .slot {
-    min-height: 100px;
+    min-height: 84px;
   }
 }
 
