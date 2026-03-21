@@ -13,6 +13,10 @@ Complete these steps **before making any code changes**:
    go test ./...
    ```
    If tests already fail on `main`, note which ones so you do not report them as regressions you introduced.
+5. **Follow the Codex workflow README when you need to branch, push, and open a PR**:
+   ```bash
+   sed -n '1,240p' docs/codex-agents/README.md
+   ```
 
 > Skipping any step risks working from stale state, undoing deliberate decisions, or generating misleading test failures.
 
