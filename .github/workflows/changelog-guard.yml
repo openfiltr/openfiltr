@@ -1,0 +1,80 @@
+name: Changelog Guard
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  require-changelog-update:
+    name: Require CHANGELOG update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed files and enforce changelog update
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          CHANGED_FILES=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          NON_TRIVIAL=$(echo "$CHANGED_FILES" | grep -Ev '^(CHANGELOG\.md|\.gitignore|LICENSE)$' || true)
+          if [ -z "$NON_TRIVIAL" ]; then
+            echo "Only trivial files changed, skipping changelog requirement."
+            exit 0
+          fi
+
+          if ! echo "$CHANGED_FILES" | grep -Eq '^CHANGELOG\.md$'; then
+            echo "CHANGELOG.md must be updated for this PR." >&2
+            exit 1
+          fi
+
+  validate-unreleased-entry:
+    name: Validate Unreleased changelog entry
+    runs-on: ubuntu-latest
+    needs: require-changelog-update
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate added entries under Unreleased
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          python3 - <<'PY'
+          import subprocess
+          import sys
+
+          diff = subprocess.check_output(
+              [
+                  "git", "diff", "--unified=0",
+                  f"origin/${{ github.base_ref }}...HEAD",
+                  "--", "CHANGELOG.md",
+              ],
+              text=True,
+          )
+
+          added = [line[1:] for line in diff.splitlines() if line.startswith('+') and not line.startswith('+++')]
+          if not added:
+              print("No added changelog lines found.", file=sys.stderr)
+              sys.exit(1)
+
+          if not any(line.strip().startswith('- ') for line in added):
+              print("Expected at least one added bullet entry in CHANGELOG.md.", file=sys.stderr)
+              sys.exit(1)
+
+          content = open('CHANGELOG.md', 'r', encoding='utf-8').read()
+          unreleased_idx = content.find('## [Unreleased]')
+          if unreleased_idx == -1:
+              print("Missing '## [Unreleased]' section.", file=sys.stderr)
+              sys.exit(1)
+
+          print("CHANGELOG.md update looks valid.")
+          PY
