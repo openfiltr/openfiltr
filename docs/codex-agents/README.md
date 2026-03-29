@@ -123,3 +123,19 @@ gh pr view --web
 - Do not stop after only drafting a PR message locally.
 - Do not say a PR exists unless the branch is pushed and `gh pr create` has succeeded.
 - Do not open a PR for empty or unrelated changes.
+
+## 9. Track migration execution in-repo
+
+For bbolt migration work, keep `docs/codex-agents/bbolt-migration-tracker.md` updated in the same PR:
+
+- move issue status forward
+- add the implementation PR link
+- capture concise behaviour notes for future agents
+
+## 10. Changelog requirements for all implementation PRs
+
+Every implementation PR must include a `CHANGELOG.md` update under `## [Unreleased]`.
+
+- Use Keep a Changelog categories
+- Include concrete context (what changed and why)
+- State in the PR body that the changelog text was AI-checked
