@@ -14,6 +14,9 @@ BINARY_NAME="openfiltr"
 VERSION="${OPENFILTR_VERSION:-latest}"
 DRY_RUN=false
 NO_ROOT=false
+SCRIPT_SOURCE="${BASH_SOURCE[0]:-$0}"
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+SYSTEMD_UNIT_TEMPLATE="${SCRIPT_DIR}/../deploy/systemd/openfiltr.service"
 
 # ── Colours ───────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'; CYAN='\033[0;36m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; RESET='\033[0m'
@@ -85,6 +88,31 @@ sha256_check() {
   fi
 }
 
+escape_sed_replacement() {
+  printf '%s' "$1" | sed -e 's/[&|]/\\&/g'
+}
+
+render_systemd_unit() {
+  local template_file install_dir config_file service_user
+
+  template_file="$SYSTEMD_UNIT_TEMPLATE"
+  if [[ ! -f "$template_file" ]]; then
+    template_file="${TMP_DIR}/openfiltr.service"
+    curl -fsSL --connect-timeout 10 "${SYSTEMD_UNIT_TEMPLATE_URL}" -o "$template_file" \
+      || fatal "Could not load systemd unit template from ${SYSTEMD_UNIT_TEMPLATE_URL}"
+  fi
+
+  install_dir="$(escape_sed_replacement "$INSTALL_DIR")"
+  config_file="$(escape_sed_replacement "$CONFIG_FILE")"
+  service_user="$(escape_sed_replacement "$SERVICE_USER")"
+
+  sed \
+    -e "s|__INSTALL_DIR__|$install_dir|g" \
+    -e "s|__CONFIG_FILE__|$config_file|g" \
+    -e "s|__SERVICE_USER__|$service_user|g" \
+    "$template_file"
+}
+
 BINARY_FILENAME="${BINARY_NAME}-${OS}-${ARCH}"
 ARCHIVE_FILENAME="${BINARY_FILENAME}.tar.gz"
 
@@ -100,6 +128,7 @@ success "Installing OpenFiltr ${VERSION} (${OS}/${ARCH})"
 
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${ARCHIVE_FILENAME}"
 CHECKSUM_URL="https://github.com/${REPO}/releases/download/${VERSION}/checksums.txt"
+SYSTEMD_UNIT_TEMPLATE_URL="https://raw.githubusercontent.com/${REPO}/${VERSION}/deploy/systemd/openfiltr.service"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -194,30 +223,7 @@ success "Configuration written"
 if [[ "$OS" == "linux" ]] && [[ "$NO_ROOT" == "false" ]] && command -v systemctl &>/dev/null; then
   info "Writing systemd service to ${SERVICE_FILE}…"
   if [[ "$DRY_RUN" == "false" ]]; then
-    sudo tee "$SERVICE_FILE" > /dev/null <<EOF
-[Unit]
-Description=OpenFiltr DNS Filtering Service
-Documentation=https://github.com/openfiltr/openfiltr
-After=network.target
-
-[Service]
-Type=simple
-User=${SERVICE_USER}
-Group=${SERVICE_USER}
-ExecStart=${INSTALL_DIR}/${BINARY_NAME} --config ${CONFIG_FILE}
-Restart=on-failure
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-ProtectSystem=strict
-PrivateTmp=true
-NoNewPrivileges=true
-AmbientCapabilities=CAP_NET_BIND_SERVICE
-CapabilityBoundingSet=CAP_NET_BIND_SERVICE
-
-[Install]
-WantedBy=multi-user.target
-EOF
+    render_systemd_unit | sudo tee "$SERVICE_FILE" > /dev/null
     sudo systemctl daemon-reload
     sudo systemctl enable --now openfiltr
   fi

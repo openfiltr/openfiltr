@@ -45,6 +45,8 @@ curl -fsSL https://raw.githubusercontent.com/openfiltr/openfiltr/main/scripts/in
 
 The installer detects your OS and architecture, installs a single binary, creates a systemd service (Linux) or launchd daemon (macOS), and writes a default config. The default backend is bbolt, stored beside the config file. Set `storage.database_url` only if you deliberately want PostgreSQL.
 
+The Linux systemd unit is checked in at [`deploy/systemd/openfiltr.service`](deploy/systemd/openfiltr.service), and the installer renders that file with the chosen install and config paths.
+
 ### PowerShell (Windows)
 
 Run the following in an **elevated** PowerShell session:
@@ -193,6 +195,7 @@ upstream_servers: []
 /openapi          - OpenAPI 3.1 specification
 /docs             - documentation
 /deploy/docker    - Dockerfile and Compose files
+/deploy/systemd   - checked-in systemd unit templates
 /scripts          - install.sh, install-openwrt.sh, and helper scripts
 /examples         - example configurations
 .github/          - CI, templates, issue infrastructure
