@@ -20,7 +20,7 @@ jobs:
       - name: Check changed files and enforce changelog update
         run: |
           git fetch origin "${{ github.base_ref }}" --depth=1
-          CHANGED_FILES=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          CHANGED_FILES=$(git diff --name-only "origin/${{ github.base_ref }}" HEAD)
 
           echo "Changed files:"
           echo "$CHANGED_FILES"
@@ -55,7 +55,7 @@ jobs:
           diff = subprocess.check_output(
               [
                   "git", "diff", "--unified=0",
-                  f"origin/${{ github.base_ref }}...HEAD",
+                  f"origin/${{ github.base_ref }}", "HEAD",
                   "--", "CHANGELOG.md",
               ],
               text=True,
