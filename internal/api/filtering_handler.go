@@ -10,20 +10,20 @@ import (
 
 // ---- helpers shared by block_rules and allow_rules ----
 
-type rule struct {
-	ID        string  `json:"id"`
-	Pattern   string  `json:"pattern"`
-	RuleType  string  `json:"rule_type"`
-	Comment   *string `json:"comment"`
-	Enabled   int     `json:"enabled"`
-	CreatedBy *string `json:"created_by"`
-	CreatedAt string  `json:"created_at"`
-	UpdatedAt string  `json:"updated_at"`
-}
+type rule = storage.RuleView
 
 func (h *Handler) listRules(w http.ResponseWriter, r *http.Request, table string) {
 	limit := queryInt(r, "limit", 100)
 	offset := queryInt(r, "offset", 0)
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		items, total, err := bolt.ListRules(table, limit, offset)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		respond(w, http.StatusOK, map[string]interface{}{"items": items, "total": total})
+		return
+	}
 	var total int
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM " + table).Scan(&total)
 	rows, err := h.db.Query(storage.Rebind("SELECT id,pattern,rule_type,comment,enabled,created_by,created_at::text,updated_at::text FROM "+table+" ORDER BY created_at DESC LIMIT ? OFFSET ?"), limit, offset)
@@ -67,6 +67,16 @@ func (h *Handler) createRule(w http.ResponseWriter, r *http.Request, table strin
 		enabled = *req.Enabled
 	}
 	id := uuid.New().String()
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		createdBy := c.UserID
+		it, err := bolt.CreateRule(table, id, req.Pattern, req.RuleType, req.Comment, enabled, &createdBy)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		respond(w, http.StatusCreated, it)
+		return
+	}
 	if _, err := h.db.Exec(storage.Rebind("INSERT INTO "+table+"(id,pattern,rule_type,comment,enabled,created_by) VALUES(?,?,?,?,?,?)"),
 		id, req.Pattern, req.RuleType, req.Comment, enabled, c.UserID); err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
@@ -80,6 +90,15 @@ func (h *Handler) createRule(w http.ResponseWriter, r *http.Request, table strin
 
 func (h *Handler) getRule(w http.ResponseWriter, r *http.Request, table string) {
 	id := chi.URLParam(r, "id")
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		it, err := bolt.GetRule(table, id)
+		if err != nil {
+			respondError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respond(w, http.StatusOK, it)
+		return
+	}
 	var it rule
 	err := h.db.QueryRow(storage.Rebind("SELECT id,pattern,rule_type,comment,enabled,created_by,created_at::text,updated_at::text FROM "+table+" WHERE id=?"), id).
 		Scan(&it.ID, &it.Pattern, &it.RuleType, &it.Comment, &it.Enabled, &it.CreatedBy, &it.CreatedAt, &it.UpdatedAt)
@@ -106,6 +125,19 @@ func (h *Handler) updateRule(w http.ResponseWriter, r *http.Request, table strin
 		respondError(w, http.StatusBadRequest, "pattern cannot be empty")
 		return
 	}
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		it, found, err := bolt.UpdateRule(table, id, req.Pattern, req.RuleType, req.Comment, req.Enabled)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		if !found {
+			respondError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respond(w, http.StatusOK, it)
+		return
+	}
 	res, err := h.db.Exec(storage.Rebind(`UPDATE `+table+` SET
 		pattern=COALESCE(?,pattern),
 		rule_type=COALESCE(?,rule_type),
@@ -129,6 +161,19 @@ func (h *Handler) updateRule(w http.ResponseWriter, r *http.Request, table strin
 
 func (h *Handler) deleteRule(w http.ResponseWriter, r *http.Request, table string) {
 	id := chi.URLParam(r, "id")
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		deleted, err := bolt.DeleteRule(table, id)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		if !deleted {
+			respondError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respond(w, http.StatusOK, map[string]string{"message": "deleted"})
+		return
+	}
 	res, err := h.db.Exec(storage.Rebind("DELETE FROM "+table+" WHERE id=?"), id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
@@ -177,21 +222,20 @@ func (h *Handler) DeleteAllowRule(w http.ResponseWriter, r *http.Request) {
 
 // ---- Rule sources ----
 
-type ruleSource struct {
-	ID            string  `json:"id"`
-	Name          string  `json:"name"`
-	URL           string  `json:"url"`
-	Format        string  `json:"format"`
-	Enabled       int     `json:"enabled"`
-	LastUpdatedAt *string `json:"last_updated_at"`
-	RuleCount     int     `json:"rule_count"`
-	CreatedAt     string  `json:"created_at"`
-	UpdatedAt     string  `json:"updated_at"`
-}
+type ruleSource = storage.RuleSourceView
 
 func (h *Handler) ListRuleSources(w http.ResponseWriter, r *http.Request) {
 	limit := queryInt(r, "limit", 100)
 	offset := queryInt(r, "offset", 0)
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		items, total, err := bolt.ListRuleSources(limit, offset)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		respond(w, http.StatusOK, map[string]interface{}{"items": items, "total": total})
+		return
+	}
 	var total int
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM rule_sources").Scan(&total)
 	rows, err := h.db.Query(storage.Rebind("SELECT id,name,url,format,enabled,last_updated_at::text,rule_count,created_at::text,updated_at::text FROM rule_sources ORDER BY created_at DESC LIMIT ? OFFSET ?"), limit, offset)
@@ -234,6 +278,15 @@ func (h *Handler) CreateRuleSource(w http.ResponseWriter, r *http.Request) {
 		enabled = *req.Enabled
 	}
 	id := uuid.New().String()
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		it, err := bolt.CreateRuleSource(id, req.Name, req.URL, req.Format, enabled)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		respond(w, http.StatusCreated, it)
+		return
+	}
 	if _, err := h.db.Exec(storage.Rebind("INSERT INTO rule_sources(id,name,url,format,enabled) VALUES(?,?,?,?,?)"),
 		id, req.Name, req.URL, req.Format, enabled); err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
@@ -247,6 +300,15 @@ func (h *Handler) CreateRuleSource(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetRuleSource(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		it, err := bolt.GetRuleSource(id)
+		if err != nil {
+			respondError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respond(w, http.StatusOK, it)
+		return
+	}
 	var it ruleSource
 	err := h.db.QueryRow(storage.Rebind("SELECT id,name,url,format,enabled,last_updated_at::text,rule_count,created_at::text,updated_at::text FROM rule_sources WHERE id=?"), id).
 		Scan(&it.ID, &it.Name, &it.URL, &it.Format, &it.Enabled, &it.LastUpdatedAt, &it.RuleCount, &it.CreatedAt, &it.UpdatedAt)
@@ -267,6 +329,19 @@ func (h *Handler) UpdateRuleSource(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := decode(r, &req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		it, found, err := bolt.UpdateRuleSource(id, req.Name, req.URL, req.Format, req.Enabled)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		if !found {
+			respondError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respond(w, http.StatusOK, it)
 		return
 	}
 	res, err := h.db.Exec(storage.Rebind(`UPDATE rule_sources SET
@@ -292,6 +367,19 @@ func (h *Handler) UpdateRuleSource(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) DeleteRuleSource(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		deleted, err := bolt.DeleteRuleSource(id)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		if !deleted {
+			respondError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respond(w, http.StatusOK, map[string]string{"message": "deleted"})
+		return
+	}
 	res, err := h.db.Exec(storage.Rebind("DELETE FROM rule_sources WHERE id=?"), id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")
@@ -306,6 +394,19 @@ func (h *Handler) DeleteRuleSource(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) RefreshRuleSource(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		found, err := bolt.RefreshRuleSource(id)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		if !found {
+			respondError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respond(w, http.StatusOK, map[string]string{"message": "refreshed"})
+		return
+	}
 	res, err := h.db.Exec(storage.Rebind("UPDATE rule_sources SET last_updated_at=NOW(),updated_at=NOW() WHERE id=?"), id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "db error")

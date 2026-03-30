@@ -17,8 +17,8 @@ RUN apk add --no-cache ca-certificates tzdata wget \
 WORKDIR /app
 COPY --from=go-builder /openfiltr ./openfiltr
 COPY openapi/ ./openapi/
-RUN mkdir -p /data /etc/openfiltr \
-    && chown -R openfiltr:openfiltr /data /etc/openfiltr /app
+RUN mkdir -p /etc/openfiltr \
+    && chown -R openfiltr:openfiltr /etc/openfiltr /app
 USER openfiltr
 EXPOSE 3000 5353/udp
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \

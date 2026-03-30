@@ -16,15 +16,15 @@ All AI and human contributors should update this file in the same pull request a
 
 | Order | Issue | Title | Status | Implementation PR | Notes |
 |------:|:------|:------|:-------|:------------------|:------|
-| 1 | [#115](https://github.com/openfiltr/openfiltr/issues/115) | Storage seam refactor: replace direct `*sql.DB` coupling with repository interface | Todo | _TBD_ | No behaviour change allowed. |
-| 2 | [#116](https://github.com/openfiltr/openfiltr/issues/116) | Add bbolt store bootstrap, bucket initialisation, and metadata versioning | Todo | _TBD_ | Deterministic bucket creation and store version metadata. |
-| 3 | [#117](https://github.com/openfiltr/openfiltr/issues/117) | Config and startup backend selector: support `storage.database_path` for bbolt | Todo | _TBD_ | Startup must succeed without PostgreSQL when path is configured. |
-| 4 | [#118](https://github.com/openfiltr/openfiltr/issues/118) | Port auth persistence (`users` and `api_tokens`) to bbolt-backed repository | Todo | _TBD_ | Preserve JWT and CSRF behaviour. |
-| 5 | [#119](https://github.com/openfiltr/openfiltr/issues/119) | Port filtering rules and DNS entries to bbolt with secondary indexes | Todo | _TBD_ | Preserve exact, wildcard, and regex matching semantics. |
-| 6 | [#120](https://github.com/openfiltr/openfiltr/issues/120) | Port activity log and stats queries to bbolt | Todo | _TBD_ | Keep bounded runtime memory and write overhead. |
-| 7 | [#121](https://github.com/openfiltr/openfiltr/issues/121) | Port remaining API CRUD resources and config import or export to bbolt | Todo | _TBD_ | Preserve API payload contracts. |
-| 8 | [#122](https://github.com/openfiltr/openfiltr/issues/122) | Make bbolt the default backend and remove mandatory PostgreSQL startup dependency | Todo | _TBD_ | PostgreSQL optional legacy support only if trivial. |
-| 9 | [#123](https://github.com/openfiltr/openfiltr/issues/123) | Document OpenWrt MT3000 single-binary deployment with bbolt and procd | Todo | _TBD_ | Include procd example and dnsmasq port guidance. |
+| 1 | [#115](https://github.com/openfiltr/openfiltr/issues/115) | Storage seam refactor: replace direct `*sql.DB` coupling with repository interface | Done | _TBD_ | SQL seam only; PostgreSQL remains the active runtime backend. |
+| 2 | [#116](https://github.com/openfiltr/openfiltr/issues/116) | Add bbolt store bootstrap, bucket initialisation, and metadata versioning | Done | _TBD_ | Deterministic bucket creation, store version metadata, and isolated reopen tests in `internal/storage/bbolt_store.go`. |
+| 3 | [#117](https://github.com/openfiltr/openfiltr/issues/117) | Config and startup backend selector: support `storage.database_path` for bbolt | Done | _TBD_ | Startup now selects bbolt when `storage.database_path` is set and skips PostgreSQL startup. |
+| 4 | [#118](https://github.com/openfiltr/openfiltr/issues/118) | Port auth persistence (`users` and `api_tokens`) to bbolt-backed repository | Done | _TBD_ | Login, setup, token listing, token creation, token deletion, and API token validation now use the auth repository layer for both PostgreSQL and bbolt. |
+| 5 | [#119](https://github.com/openfiltr/openfiltr/issues/119) | Port filtering rules and DNS entries to bbolt with secondary indexes | Done | _TBD_ | bbolt now maintains lookup buckets for enabled rules and DNS entries, and the DNS server uses them for exact, wildcard, regex, and host/type lookups. |
+| 6 | [#120](https://github.com/openfiltr/openfiltr/issues/120) | Port activity log and stats queries to bbolt | Done | _TBD_ | bbolt activity logs now back system stats, activity listings, top-domain aggregation, and DNS query writes. |
+| 7 | [#121](https://github.com/openfiltr/openfiltr/issues/121) | Port remaining API CRUD resources and config import or export to bbolt | Done | _TBD_ | Config export/import now runs against bbolt, and audit event listing uses the bbolt store directly. Preserve API payload contracts. |
+| 8 | [#122](https://github.com/openfiltr/openfiltr/issues/122) | Make bbolt the default backend and remove mandatory PostgreSQL startup dependency | Done | _TBD_ | Default config now uses a local bbolt database beside the config file; PostgreSQL is only used when `storage.database_url` is set. |
+| 9 | [#123](https://github.com/openfiltr/openfiltr/issues/123) | Document OpenWrt MT3000 single-binary deployment with bbolt and procd | Done | _TBD_ | Added a dedicated OpenWrt MT3000 guide with a `procd` service example and dnsmasq port guidance. |
 
 ## Changelog policy for this migration
 

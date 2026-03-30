@@ -33,8 +33,11 @@ type UpstreamServer struct {
 }
 
 type Storage struct {
-	DatabaseURL string `yaml:"database_url"`
+	DatabaseURL  string `yaml:"database_url,omitempty"`
+	DatabasePath string `yaml:"database_path,omitempty"`
 }
+
+const DefaultDatabasePath = "openfiltr.db"
 
 type Auth struct {
 	JWTSecret   string `yaml:"jwt_secret"`
@@ -56,7 +59,7 @@ func Defaults() *Config {
 			},
 			CacheTTL: 300,
 		},
-		Storage: Storage{DatabaseURL: "postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable"},
+		Storage: Storage{DatabasePath: DefaultDatabasePath},
 		Auth:    Auth{JWTSecret: "change-me-in-production", TokenExpiry: 24},
 	}
 }
@@ -85,6 +88,9 @@ func Load(path string) (*Config, error) {
 	}
 	if s := os.Getenv("OPENFILTR_DATABASE_URL"); s != "" {
 		cfg.Storage.DatabaseURL = s
+	}
+	if s := os.Getenv("OPENFILTR_DATABASE_PATH"); s != "" {
+		cfg.Storage.DatabasePath = s
 	}
 	return cfg, nil
 }

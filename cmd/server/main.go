@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -44,17 +45,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := storage.Open(cfg.Storage.DatabaseURL)
-	if err != nil {
-		slog.Error("failed to open database", "error", err)
-		os.Exit(1)
+	selection := resolveStorageSelection(cfg, *configPath)
+
+	var db storage.Store
+	switch selection.backend {
+	case "postgres":
+		db, err = storage.Open(cfg.Storage.DatabaseURL)
+		if err != nil {
+			slog.Error("failed to open database", "error", err)
+			os.Exit(1)
+		}
+		if err := storage.Migrate(db); err != nil {
+			slog.Error("failed to run migrations", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("using PostgreSQL storage backend")
+	default:
+		db, err = storage.OpenBolt(selection.path)
+		if err != nil {
+			slog.Error("failed to open bbolt database", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("using bbolt storage backend", "path", selection.path)
 	}
 	defer db.Close()
-
-	if err := storage.Migrate(db); err != nil {
-		slog.Error("failed to run migrations", "error", err)
-		os.Exit(1)
-	}
 
 	dnsServer := dns.NewServer(cfg, db)
 	router := api.NewRouter(cfg, db, version)
@@ -94,4 +108,24 @@ func main() {
 		slog.Error("HTTP shutdown error", "error", err)
 	}
 	slog.Info("shutdown complete")
+}
+
+type storageSelection struct {
+	backend string
+	path    string
+}
+
+func resolveStorageSelection(cfg *config.Config, configPath string) storageSelection {
+	if cfg.Storage.DatabaseURL != "" {
+		return storageSelection{backend: "postgres"}
+	}
+
+	dbPath := cfg.Storage.DatabasePath
+	if dbPath == "" {
+		dbPath = config.DefaultDatabasePath
+	}
+	if !filepath.IsAbs(dbPath) {
+		dbPath = filepath.Join(filepath.Dir(configPath), dbPath)
+	}
+	return storageSelection{backend: "bolt", path: dbPath}
 }

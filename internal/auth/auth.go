@@ -2,7 +2,6 @@ package auth
 
 import (
 	"crypto/rand"
-	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -10,8 +9,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
-	"github.com/openfiltr/openfiltr/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -20,16 +17,6 @@ type Claims struct {
 	Username string `json:"username"`
 	Role     string `json:"role"`
 	jwt.RegisteredClaims
-}
-
-type Service struct {
-	db        *sql.DB
-	jwtSecret []byte
-	expiry    time.Duration
-}
-
-func NewService(db *sql.DB, secret string, hours int) *Service {
-	return &Service{db: db, jwtSecret: []byte(secret), expiry: time.Duration(hours) * time.Hour}
 }
 
 func HashPassword(pw string) (string, error) {
@@ -79,42 +66,6 @@ func GenerateAPIToken() (raw, hash string, err error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(raw), bcrypt.MinCost)
 	hash = string(h)
 	return
-}
-
-func (s *Service) ValidateAPIToken(token string) (*Claims, error) {
-	rows, err := s.db.Query(`SELECT at.token_hash,u.id,u.username,u.role FROM api_tokens at JOIN users u ON u.id=at.user_id WHERE (at.expires_at IS NULL OR at.expires_at>NOW())`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var h, uid, uname, role string
-		if err := rows.Scan(&h, &uid, &uname, &role); err != nil {
-			continue
-		}
-		if bcrypt.CompareHashAndPassword([]byte(h), []byte(token)) == nil {
-			_, _ = s.db.Exec(storage.Rebind("UPDATE api_tokens SET last_used_at=NOW() WHERE token_hash=?"), h)
-			return &Claims{UserID: uid, Username: uname, Role: role}, nil
-		}
-	}
-	return nil, fmt.Errorf("invalid API token")
-}
-
-func EnsureAdminUser(db *sql.DB, username, password string) error {
-	var count int
-	if err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count); err != nil {
-		return err
-	}
-	if count > 0 {
-		return nil
-	}
-	hash, err := HashPassword(password)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(storage.Rebind(`INSERT INTO users(id,username,email,password_hash,role) VALUES(?,?,?,?,'admin')`),
-		uuid.New().String(), username, username+"@localhost", hash)
-	return err
 }
 
 func ExtractToken(r *http.Request) string {

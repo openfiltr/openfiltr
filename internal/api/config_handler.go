@@ -21,13 +21,20 @@ type exportPayload struct {
 }
 
 func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {
-	payload := exportPayload{
-		Version:         configExportVersion,
-		BlockRules:      h.fetchRows("SELECT id,pattern,rule_type,comment,enabled FROM block_rules"),
-		AllowRules:      h.fetchRows("SELECT id,pattern,rule_type,comment,enabled FROM allow_rules"),
-		RuleSources:     h.fetchRows("SELECT id,name,url,format,enabled FROM rule_sources"),
-		DNSEntries:      h.fetchRows("SELECT id,host,entry_type,value,ttl,comment,enabled FROM dns_entries"),
-		UpstreamServers: h.fetchRows("SELECT id,name,address,protocol,enabled,priority FROM upstream_servers"),
+	payload := exportPayload{Version: configExportVersion}
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		var err error
+		payload, err = exportConfigFromBolt(bolt)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "failed to load config")
+			return
+		}
+	} else {
+		payload.BlockRules = h.fetchRows("SELECT id,pattern,rule_type,comment,enabled FROM block_rules")
+		payload.AllowRules = h.fetchRows("SELECT id,pattern,rule_type,comment,enabled FROM allow_rules")
+		payload.RuleSources = h.fetchRows("SELECT id,name,url,format,enabled FROM rule_sources")
+		payload.DNSEntries = h.fetchRows("SELECT id,host,entry_type,value,ttl,comment,enabled FROM dns_entries")
+		payload.UpstreamServers = h.fetchRows("SELECT id,name,address,protocol,enabled,priority FROM upstream_servers")
 	}
 	data, err := yaml.Marshal(payload)
 	if err != nil {
@@ -74,6 +81,16 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := validateConfigVersion(payload.Version); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		imported, err := importConfigToBolt(bolt, payload)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "failed to import config")
+			return
+		}
+		respond(w, http.StatusOK, map[string]interface{}{"imported": imported})
 		return
 	}
 
@@ -182,6 +199,257 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 	respond(w, http.StatusOK, map[string]interface{}{"imported": imported})
 }
 
+func exportConfigFromBolt(bolt *storage.BoltStore) (exportPayload, error) {
+	limit := int(^uint(0) >> 1)
+
+	blockRules, _, err := bolt.ListRules("block_rules", limit, 0)
+	if err != nil {
+		return exportPayload{}, err
+	}
+	allowRules, _, err := bolt.ListRules("allow_rules", limit, 0)
+	if err != nil {
+		return exportPayload{}, err
+	}
+	ruleSources, _, err := bolt.ListRuleSources(limit, 0)
+	if err != nil {
+		return exportPayload{}, err
+	}
+	dnsEntries, _, err := bolt.ListDNSEntries(limit, 0)
+	if err != nil {
+		return exportPayload{}, err
+	}
+	upstreamServers, _, err := bolt.ListUpstreamServers(limit, 0)
+	if err != nil {
+		return exportPayload{}, err
+	}
+
+	return exportPayload{
+		Version:         configExportVersion,
+		BlockRules:      exportRuleMaps(blockRules),
+		AllowRules:      exportRuleMaps(allowRules),
+		RuleSources:     exportRuleSourceMaps(ruleSources),
+		DNSEntries:      exportDNSEntryMaps(dnsEntries),
+		UpstreamServers: exportUpstreamServerMaps(upstreamServers),
+	}, nil
+}
+
+func importConfigToBolt(bolt *storage.BoltStore, payload exportPayload) (int, error) {
+	imported := 0
+	for _, row := range payload.BlockRules {
+		if err := importBoltRule(bolt, "block_rules", row); err != nil {
+			return 0, err
+		}
+		if stringValue(row, "pattern") != "" {
+			imported++
+		}
+	}
+	for _, row := range payload.AllowRules {
+		if err := importBoltRule(bolt, "allow_rules", row); err != nil {
+			return 0, err
+		}
+		if stringValue(row, "pattern") != "" {
+			imported++
+		}
+	}
+	for _, row := range payload.RuleSources {
+		if err := importBoltRuleSource(bolt, row); err != nil {
+			return 0, err
+		}
+		if stringValue(row, "name") != "" && stringValue(row, "url") != "" {
+			imported++
+		}
+	}
+	for _, row := range payload.DNSEntries {
+		if err := importBoltDNSEntry(bolt, row); err != nil {
+			return 0, err
+		}
+		if stringValue(row, "host") != "" && stringValue(row, "entry_type") != "" && stringValue(row, "value") != "" {
+			imported++
+		}
+	}
+	for _, row := range payload.UpstreamServers {
+		if err := importBoltUpstreamServer(bolt, row); err != nil {
+			return 0, err
+		}
+		if stringValue(row, "name") != "" && stringValue(row, "address") != "" {
+			imported++
+		}
+	}
+	return imported, nil
+}
+
+func importBoltRule(bolt *storage.BoltStore, table string, row map[string]interface{}) error {
+	id := stringValue(row, "id")
+	pattern := stringValue(row, "pattern")
+	ruleType := stringValue(row, "rule_type")
+	comment := nullableStringValue(row, "comment")
+	enabled := intValue(row, "enabled", 1)
+	if pattern == "" {
+		return nil
+	}
+	if id == "" {
+		id = newID()
+	}
+	if ruleType == "" {
+		ruleType = "exact"
+	}
+	patternCopy := pattern
+	ruleTypeCopy := ruleType
+	enabledCopy := enabled
+	if _, found, err := bolt.UpdateRule(table, id, &patternCopy, &ruleTypeCopy, comment, &enabledCopy); err != nil {
+		return err
+	} else if found {
+		return nil
+	}
+	_, err := bolt.CreateRule(table, id, pattern, ruleType, comment, enabled, nil)
+	return err
+}
+
+func importBoltRuleSource(bolt *storage.BoltStore, row map[string]interface{}) error {
+	id := stringValue(row, "id")
+	name := stringValue(row, "name")
+	url := stringValue(row, "url")
+	format := stringValue(row, "format")
+	enabled := intValue(row, "enabled", 1)
+	if name == "" || url == "" {
+		return nil
+	}
+	if id == "" {
+		id = newID()
+	}
+	if format == "" {
+		format = "hosts"
+	}
+	nameCopy := name
+	urlCopy := url
+	formatCopy := format
+	enabledCopy := enabled
+	if _, found, err := bolt.UpdateRuleSource(id, &nameCopy, &urlCopy, &formatCopy, &enabledCopy); err != nil {
+		return err
+	} else if found {
+		return nil
+	}
+	_, err := bolt.CreateRuleSource(id, name, url, format, enabled)
+	return err
+}
+
+func importBoltDNSEntry(bolt *storage.BoltStore, row map[string]interface{}) error {
+	id := stringValue(row, "id")
+	host := stringValue(row, "host")
+	entryType := stringValue(row, "entry_type")
+	value := stringValue(row, "value")
+	comment := nullableStringValue(row, "comment")
+	ttl := intValue(row, "ttl", 300)
+	enabled := intValue(row, "enabled", 1)
+	if host == "" || entryType == "" || value == "" {
+		return nil
+	}
+	if id == "" {
+		id = newID()
+	}
+	hostCopy := host
+	entryTypeCopy := entryType
+	valueCopy := value
+	ttlCopy := ttl
+	enabledCopy := enabled
+	if _, found, err := bolt.UpdateDNSEntry(id, &hostCopy, &entryTypeCopy, &valueCopy, &ttlCopy, comment, &enabledCopy); err != nil {
+		return err
+	} else if found {
+		return nil
+	}
+	_, err := bolt.CreateDNSEntry(id, host, entryType, value, ttl, comment, nil, enabled)
+	return err
+}
+
+func importBoltUpstreamServer(bolt *storage.BoltStore, row map[string]interface{}) error {
+	id := stringValue(row, "id")
+	name := stringValue(row, "name")
+	address := stringValue(row, "address")
+	protocol := stringValue(row, "protocol")
+	enabled := intValue(row, "enabled", 1)
+	priority := intValue(row, "priority", 0)
+	if name == "" || address == "" {
+		return nil
+	}
+	if id == "" {
+		id = newID()
+	}
+	if protocol == "" {
+		protocol = "udp"
+	}
+	nameCopy := name
+	addressCopy := address
+	protocolCopy := protocol
+	enabledCopy := enabled
+	priorityCopy := priority
+	if _, found, err := bolt.UpdateUpstreamServer(id, &nameCopy, &addressCopy, &protocolCopy, &enabledCopy, &priorityCopy); err != nil {
+		return err
+	} else if found {
+		return nil
+	}
+	_, err := bolt.CreateUpstreamServer(id, name, address, protocol, enabled, priority)
+	return err
+}
+
+func exportRuleMaps(items []storage.RuleView) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(items))
+	for _, it := range items {
+		result = append(result, map[string]interface{}{
+			"id":        it.ID,
+			"pattern":   it.Pattern,
+			"rule_type": it.RuleType,
+			"comment":   it.Comment,
+			"enabled":   it.Enabled,
+		})
+	}
+	return result
+}
+
+func exportRuleSourceMaps(items []storage.RuleSourceView) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(items))
+	for _, it := range items {
+		result = append(result, map[string]interface{}{
+			"id":      it.ID,
+			"name":    it.Name,
+			"url":     it.URL,
+			"format":  it.Format,
+			"enabled": it.Enabled,
+		})
+	}
+	return result
+}
+
+func exportDNSEntryMaps(items []storage.DNSEntryView) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(items))
+	for _, it := range items {
+		result = append(result, map[string]interface{}{
+			"id":         it.ID,
+			"host":       it.Host,
+			"entry_type": it.EntryType,
+			"value":      it.Value,
+			"ttl":        it.TTL,
+			"comment":    it.Comment,
+			"enabled":    it.Enabled,
+		})
+	}
+	return result
+}
+
+func exportUpstreamServerMaps(items []storage.UpstreamServerView) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(items))
+	for _, it := range items {
+		result = append(result, map[string]interface{}{
+			"id":       it.ID,
+			"name":     it.Name,
+			"address":  it.Address,
+			"protocol": it.Protocol,
+			"enabled":  it.Enabled,
+			"priority": it.Priority,
+		})
+	}
+	return result
+}
+
 func validateConfigVersion(version int) error {
 	if version == 0 {
 		return fmt.Errorf("missing required top-level version field")
@@ -217,14 +485,15 @@ func stringValue(row map[string]interface{}, key string) string {
 	}
 }
 
-func nullableStringValue(row map[string]interface{}, key string) interface{} {
+func nullableStringValue(row map[string]interface{}, key string) *string {
 	switch v := row[key].(type) {
 	case nil:
 		return nil
 	case string:
-		return v
+		return &v
 	case []byte:
-		return string(v)
+		s := string(v)
+		return &s
 	default:
 		return nil
 	}

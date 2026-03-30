@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func Open(databaseURL string) (*sql.DB, error) {
+func Open(databaseURL string) (Store, error) {
 	if databaseURL == "" {
 		return nil, fmt.Errorf("database url is required")
 	}

@@ -129,7 +129,8 @@ dns:
     - name: Quad9
       address: "9.9.9.9:53"
 storage:
-  database_url: "postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable"
+  database_path: "openfiltr.db"
+  # database_url: "postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable"
 auth:
   token_expiry_hours: 24
 "@
@@ -180,7 +181,7 @@ auth:
     Write-Host ""
     Write-Info "To view logs:  Get-WinEvent -LogName Application -ProviderName $BinaryName -MaxEvents 50 (or check Event Viewer)"
     Write-Info "To stop:       Stop-Service $BinaryName"
-    Write-Warn "PostgreSQL must be running and reachable at the configured database_url before OpenFiltr will start."
+    Write-Warn "The default backend is bbolt. Set database_url only if you deliberately want PostgreSQL."
 
 } finally {
     Remove-Item -Path $TmpDir -Recurse -Force -ErrorAction SilentlyContinue

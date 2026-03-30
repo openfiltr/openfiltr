@@ -61,6 +61,20 @@ jobs:
           build_binary windows amd64
           build_binary windows arm64
 
+          package_openwrt() {
+            local asset=$1
+            local stage="dist/${asset}"
+            rm -rf "$stage"
+            mkdir -p "$stage"
+            install -m 0755 dist/openfiltr-linux-arm64 "$stage/openfiltr"
+            tar -C "$stage" -czf "dist/${asset}.tar.gz" openfiltr
+            rm -rf "$stage"
+          }
+
+          package_openwrt openfiltr-openwrt-arm64
+          package_openwrt openfiltr-openwrt-mt3000
+          package_openwrt openfiltr-openwrt-mt6000
+
           (cd dist && sha256sum *.tar.gz *.zip > checksums.txt)
       - name: Log in to GHCR
         uses: docker/login-action@v3
