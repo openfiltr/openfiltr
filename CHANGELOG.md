@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Architecture Decision Records (ADRs) directory at `docs/adr/` with a README template and an index. Two initial ADRs document the PostgreSQL-only storage decision (ADR-0001) and the agent pre-task protocol (ADR-0002).
 - Automated changelog update workflow (`.github/workflows/changelog-update.yml`): on every PR merge to `main`, a structured GitHub issue is created and assigned to the Copilot coding agent, prompting it to append an entry to `CHANGELOG.md` with full PR context (title, author, merge date, description).
 - Added a BusyBox-friendly OpenWrt installer at `scripts/install-openwrt.sh` for MT3000 and MT6000 routers. It downloads router release assets, prompts for router IP and ports, installs the binary plus `procd` service, and configures dnsmasq forwarding or exclusive port 53 mode.
+- PR #124 (merged 2026-03-29): added `docs/codex-agents/README.md` guidance requiring changelog updates for implementation PRs and instructing agents to update the bbolt migration tracker where applicable, ensuring both human and AI contributors follow the pre-task and post-task protocols.
 
 ### Changed
 
