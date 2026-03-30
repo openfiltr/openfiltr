@@ -3,14 +3,16 @@
 ## v1.0 - Foundation
 
 - [x] DNS forwarding
-- [x] Block & allow rules (exact, wildcard, regex)
+- [x] Block rules (exact, wildcard, regex)
+- [ ] Allow-rule precedence
 - [x] Rule sources (hosts format)
 - [x] Local DNS entries (A, AAAA, CNAME)
-- [x] Per-client / per-group policies
+- [ ] Per-client / per-group policies
 - [x] REST API + OpenAPI 3.1 spec
 - [x] YAML import & export
 - [x] Docker & curl install
-- [x] PostgreSQL persistence
+- [x] Embedded bbolt persistence
+- [x] Optional PostgreSQL persistence
 - [x] Local user auth + API tokens
 - [x] Activity log & audit trail
 - [x] Configuration export & import
@@ -30,7 +32,6 @@
 
 - [ ] Plugin system
 - [ ] Theme customisation
-- [x] PostgreSQL storage
 - [ ] SSO integration
 - [ ] Policy templates
 

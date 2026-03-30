@@ -8,7 +8,7 @@
 This repository is developed with heavy AI coding agent involvement (GitHub Copilot, Claude, etc.). Without a standardised starting protocol, agents risk:
 
 - Working from a stale branch and creating conflicts.
-- Repeating or reversing decisions that were already deliberately made and recorded (e.g. the PostgreSQL migration in ADR-0001).
+- Repeating or reversing decisions that were already deliberately made and recorded (for example the storage direction captured in ADR-0001 and ADR-0003).
 - Breaking the existing test baseline before they have made any changes, making it impossible to distinguish pre-existing failures from regressions they introduced.
 - Writing changelog entries inconsistent with the established format.
 

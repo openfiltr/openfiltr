@@ -39,5 +39,6 @@ What are the results of this decision — positive, negative, and neutral?
 
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
-| [0001](0001-postgresql-only-storage.md) | PostgreSQL as the only supported database backend | Accepted | 2026-03-18 |
+| [0001](0001-postgresql-only-storage.md) | PostgreSQL as the only supported database backend | Superseded by ADR-0003 | 2026-03-18 |
 | [0002](0002-agent-pre-task-protocol.md) | Agent pre-task protocol: sync, read ADRs and changelog, run tests | Accepted | 2026-03-19 |
+| [0003](0003-bbolt-default-storage.md) | bbolt as the default embedded backend with PostgreSQL compatibility | Accepted | 2026-03-30 |

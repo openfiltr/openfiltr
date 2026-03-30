@@ -53,8 +53,9 @@ Complete these steps **before making any code changes**:
 
 ## Storage Notes
 
-- PostgreSQL is the only supported database backend.
-- Configuration should use `storage.database_url` or `OPENFILTR_DATABASE_URL`.
+- bbolt is the default embedded backend.
+- PostgreSQL remains an optional backend when `storage.database_url` is set.
+- Configuration can use `storage.database_path` or `OPENFILTR_DATABASE_PATH`, and can still use `storage.database_url` or `OPENFILTR_DATABASE_URL` for PostgreSQL.
 - Do not reintroduce SQLite-specific code, docs, or workflow dependencies.
 
 ## Worktrees
@@ -105,5 +106,5 @@ Complete these steps **before making any code changes**:
 ## Current Risks
 
 - README and roadmap history may lag behind the code.
-- Storage changes touch many raw SQL call sites.
+- Storage parity now spans both bbolt and PostgreSQL paths.
 - CI and release workflows are part of the product surface here, not afterthoughts.
