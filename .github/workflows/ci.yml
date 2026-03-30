@@ -93,6 +93,49 @@ jobs:
           name: openfiltr-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/openfiltr-${{ matrix.goos }}-${{ matrix.goarch }}
 
+  build-openwrt-router:
+    name: Build OpenWrt Router
+    runs-on: ubuntu-latest
+    needs: test-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+      - name: Build OpenWrt router artefacts
+        run: |
+          set -euo pipefail
+          mkdir -p dist/openwrt
+          VERSION=${GITHUB_SHA::7}
+          COMMIT=${GITHUB_SHA}
+          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+            go build \
+            -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.buildDate=${BUILD_DATE}" \
+            -o dist/openfiltr-linux-arm64 \
+            ./cmd/server
+
+          package_router() {
+            local asset=$1
+            local stage="dist/openwrt/${asset}"
+            rm -rf "${stage}"
+            mkdir -p "${stage}"
+            install -m 0755 dist/openfiltr-linux-arm64 "${stage}/openfiltr"
+            tar -C "${stage}" -czf "dist/${asset}.tar.gz" openfiltr
+          }
+
+          package_router openfiltr-openwrt-arm64
+          package_router openfiltr-openwrt-mt3000
+          package_router openfiltr-openwrt-mt6000
+          (cd dist && sha256sum openfiltr-openwrt-*.tar.gz > openfiltr-openwrt-checksums.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openfiltr-openwrt-router
+          path: |
+            dist/openfiltr-openwrt-*.tar.gz
+            dist/openfiltr-openwrt-checksums.txt
+
   docker:
     name: Docker Build
     runs-on: ubuntu-latest

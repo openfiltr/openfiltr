@@ -2,7 +2,6 @@ package dns
 
 import (
 	"crypto/rand"
-	"database/sql"
 	"fmt"
 	"log/slog"
 	"net"
@@ -19,7 +18,7 @@ import (
 
 type Server struct {
 	cfg        *config.Config
-	db         *sql.DB
+	db         storage.Store
 	server     *mdns.Server
 	regexMu    sync.RWMutex
 	regexCache map[string]cachedRegexp
@@ -30,7 +29,7 @@ type cachedRegexp struct {
 	err error
 }
 
-func NewServer(cfg *config.Config, db *sql.DB) *Server {
+func NewServer(cfg *config.Config, db storage.Store) *Server {
 	return &Server{cfg: cfg, db: db, regexCache: make(map[string]cachedRegexp)}
 }
 
@@ -99,6 +98,13 @@ func (s *Server) isBlocked(domain string) bool {
 }
 
 func (s *Server) hasExactBlockRule(domain string) bool {
+	if bolt, ok := s.db.(*storage.BoltStore); ok {
+		exists, err := bolt.HasRulePattern("block_rules", "exact", domain)
+		if err != nil {
+			return false
+		}
+		return exists
+	}
 	var exists bool
 	if err := s.db.QueryRow(storage.Rebind(`SELECT EXISTS(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='exact' AND lower(pattern)=?)`), domain).Scan(&exists); err != nil {
 		return false
@@ -112,6 +118,19 @@ func (s *Server) hasWildcardBlockRule(domain string) bool {
 		return false
 	}
 
+	if bolt, ok := s.db.(*storage.BoltStore); ok {
+		for _, pattern := range patterns {
+			exists, err := bolt.HasRulePattern("block_rules", "wildcard", pattern)
+			if err != nil {
+				return false
+			}
+			if exists {
+				return true
+			}
+		}
+		return false
+	}
+
 	var exists bool
 	if err := s.db.QueryRow(storage.Rebind(`SELECT EXISTS(SELECT 1 FROM block_rules WHERE enabled=1 AND rule_type='wildcard' AND lower(pattern) = ANY(?))`), pq.Array(patterns)).Scan(&exists); err != nil {
 		return false
@@ -120,6 +139,23 @@ func (s *Server) hasWildcardBlockRule(domain string) bool {
 }
 
 func (s *Server) hasRegexBlockRule(domain string) bool {
+	if bolt, ok := s.db.(*storage.BoltStore); ok {
+		patterns, err := bolt.ListRulePatternsByType("block_rules", "regex")
+		if err != nil {
+			return false
+		}
+		for _, pattern := range patterns {
+			re, err := s.compiledRegex(pattern)
+			if err != nil {
+				slog.Warn("invalid block rule regex", "pattern", pattern, "err", err)
+				continue
+			}
+			if re.MatchString(domain) {
+				return true
+			}
+		}
+		return false
+	}
 	rows, err := s.db.Query(`SELECT pattern FROM block_rules WHERE enabled=1 AND rule_type='regex'`)
 	if err != nil {
 		return false
@@ -185,6 +221,32 @@ func (s *Server) compiledRegex(pattern string) (*regexp.Regexp, error) {
 
 func (s *Server) localEntries(domain string, qtype uint16) []mdns.RR {
 	typeName := mdns.TypeToString[qtype]
+	if bolt, ok := s.db.(*storage.BoltStore); ok {
+		entries, err := bolt.DNSEntriesByHostAndType(domain, typeName)
+		if err != nil {
+			return nil
+		}
+		var rrs []mdns.RR
+		for _, entry := range entries {
+			if entry.Enabled != 1 {
+				continue
+			}
+			ttl := uint32(entry.TTL)
+			switch entry.EntryType {
+			case "A":
+				if ip := net.ParseIP(entry.Value).To4(); ip != nil {
+					rrs = append(rrs, &mdns.A{Hdr: mdns.RR_Header{Name: domain + ".", Rrtype: mdns.TypeA, Class: mdns.ClassINET, Ttl: ttl}, A: ip})
+				}
+			case "AAAA":
+				if ip := net.ParseIP(entry.Value); ip != nil {
+					rrs = append(rrs, &mdns.AAAA{Hdr: mdns.RR_Header{Name: domain + ".", Rrtype: mdns.TypeAAAA, Class: mdns.ClassINET, Ttl: ttl}, AAAA: ip})
+				}
+			case "CNAME":
+				rrs = append(rrs, &mdns.CNAME{Hdr: mdns.RR_Header{Name: domain + ".", Rrtype: mdns.TypeCNAME, Class: mdns.ClassINET, Ttl: ttl}, Target: entry.Value + "."})
+			}
+		}
+		return rrs
+	}
 	rows, err := s.db.Query(storage.Rebind(`SELECT entry_type,value,ttl FROM dns_entries WHERE host=? AND enabled=1 AND entry_type=?`), domain, typeName)
 	if err != nil {
 		return nil
@@ -235,6 +297,13 @@ func (s *Server) log(clientIP, domain, qtype, action string, ms int) {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 	id := fmt.Sprintf("%x", b)
+	if bolt, ok := s.db.(*storage.BoltStore); ok {
+		msCopy := ms
+		if err := bolt.AppendActivityEntry(id, clientIP, domain, qtype, action, nil, nil, &msCopy); err != nil {
+			slog.Warn("activity log write failed", "err", err)
+		}
+		return
+	}
 	_, _ = s.db.Exec(storage.Rebind(`INSERT INTO activity_log(id,client_ip,domain,query_type,action,response_time_ms) VALUES(?,?,?,?,?,?)`),
 		id, clientIP, domain, qtype, action, ms)
 }

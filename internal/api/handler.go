@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,10 +10,11 @@ import (
 
 	"github.com/openfiltr/openfiltr/internal/auth"
 	"github.com/openfiltr/openfiltr/internal/config"
+	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
 type Handler struct {
-	db      *sql.DB
+	db      storage.Store
 	cfg     *config.Config
 	authSvc *auth.Service
 	version string
@@ -71,6 +71,23 @@ func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Stats(w http.ResponseWriter, r *http.Request) {
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		total, blocked, allowed, err := bolt.ActivityCounts()
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		rate := 0.0
+		if total > 0 {
+			rate = float64(blocked) / float64(total) * 100
+		}
+		respond(w, http.StatusOK, map[string]interface{}{
+			"total_queries": total, "blocked_queries": blocked, "allowed_queries": allowed,
+			"block_rate": fmt.Sprintf("%.2f", rate),
+		})
+		return
+	}
+
 	var total, blocked, allowed int
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM activity_log").Scan(&total)
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM activity_log WHERE action='blocked'").Scan(&blocked)

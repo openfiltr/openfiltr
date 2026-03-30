@@ -24,7 +24,7 @@ OpenFiltr is a self-hosted DNS filtering server that blocks advertisements, trac
 
 - **API-first**: every feature is accessible through a documented REST API
 - **Portable**: configuration is YAML, importable and exportable in full or by section
-- **Fast**: single Go binary, PostgreSQL-backed state, low memory footprint
+- **Fast**: single Go binary, bbolt-backed state by default, PostgreSQL remains optional, low memory footprint
 - **Open**: AGPLv3 licence, public roadmap, community governance
 
 ## Why does it exist?
@@ -43,7 +43,7 @@ Existing DNS filtering tools prioritise simplicity over extensibility. OpenFiltr
 curl -fsSL https://raw.githubusercontent.com/openfiltr/openfiltr/main/scripts/install.sh | sh
 ```
 
-The installer detects your OS and architecture, installs a single binary, creates a systemd service (Linux) or launchd daemon (macOS), and writes a default config. PostgreSQL must already be running and reachable from the configured `database_url`.
+The installer detects your OS and architecture, installs a single binary, creates a systemd service (Linux) or launchd daemon (macOS), and writes a default config. The default backend is bbolt, stored beside the config file. Set `storage.database_url` only if you deliberately want PostgreSQL.
 
 ### PowerShell (Windows)
 
@@ -53,7 +53,7 @@ Run the following in an **elevated** PowerShell session:
 irm https://raw.githubusercontent.com/openfiltr/openfiltr/main/scripts/install.ps1 | iex
 ```
 
-The installer downloads the Windows binary, writes a default config to `%ProgramData%\openfiltr\`, adds the binary to your `PATH`, and registers a Windows service. PostgreSQL must already be running and reachable from the configured `database_url`.
+The installer downloads the Windows binary, writes a default config to `%ProgramData%\openfiltr\`, adds the binary to your `PATH`, and registers a Windows service. The default backend is bbolt, stored beside the config file. Set `storage.database_url` only if you deliberately want PostgreSQL.
 
 > **Note:** Run PowerShell as Administrator to register the Windows service and write to `%ProgramFiles%`. Pass `-NoRoot` to install to your user profile instead (`%LOCALAPPDATA%\OpenFiltr\`) without requiring elevation.
 
@@ -61,32 +61,43 @@ The installer downloads the Windows binary, writes a default config to `%Program
 
 ```yaml
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: openfiltr
-      POSTGRES_USER: openfiltr
-      POSTGRES_PASSWORD: openfiltr
-
   openfiltr:
     image: ghcr.io/openfiltr/openfiltr:latest
-    depends_on:
-      - postgres
+    container_name: openfiltr
     ports:
       - "53:53/udp"
       - "53:53/tcp"
       - "3000:3000"
-    environment:
-      - OPENFILTR_DATABASE_URL=postgres://openfiltr:openfiltr@postgres:5432/openfiltr?sslmode=disable
+    volumes:
+      - openfiltr-config:/etc/openfiltr
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/v1/system/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+volumes:
+  openfiltr-config:
 ```
 
-Then use the API on [http://localhost:3000](http://localhost:3000) to verify the service and complete first-run setup through the auth endpoints.
+The config volume stores both `app.yaml` and the default bbolt database. Set `storage.database_url` only if you deliberately want PostgreSQL.
+
+### OpenWrt MT3000 / MT6000
+
+Run the router installer on the device itself:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/openfiltr/openfiltr/main/scripts/install-openwrt.sh | sh
+```
+
+Run it as `root`, or pipe it into `sudo sh` if your router actually has `sudo`.
+
+The installer detects MT3000 and MT6000 models, downloads the matching `linux/arm64` release asset, prompts for router IP plus HTTP and DNS ports, installs `/usr/bin/openfiltr`, writes `/etc/openfiltr/app.yaml`, creates a `procd` service, and updates dnsmasq. The default path keeps dnsmasq on port 53 and forwards to OpenFiltr on 5353. If you choose port 53 for OpenFiltr, the installer disables dnsmasq DNS listening because both processes cannot own the same port.
+
+This path assumes the router has outbound internet access to GitHub release assets and raw GitHub content.
+
+For a router-specific deployment guide, manual fallback steps, and override flags such as `--download-url`, see [the OpenWrt deployment guide](docs/deployment/openwrt-mt3000.md).
 
 ## Features
 
@@ -143,7 +154,8 @@ server:
   listen_dns: ":53"
 
 storage:
-  database_url: "postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable"
+  database_path: "openfiltr.db"
+  # database_url: "postgres://openfiltr:openfiltr@localhost:5432/openfiltr?sslmode=disable"
 
 dns:
   upstream_servers:
@@ -152,6 +164,8 @@ dns:
     - name: Quad9
       address: "9.9.9.9:53"
 ```
+
+Relative `database_path` values are resolved against the config file directory, so `openfiltr.db` sits beside `app.yaml`.
 
 Export your configuration at any time:
 
@@ -178,7 +192,7 @@ upstream_servers: []
 /openapi          - OpenAPI 3.1 specification
 /docs             - documentation
 /deploy/docker    - Dockerfile and Compose files
-/scripts          - install.sh and helper scripts
+/scripts          - install.sh, install-openwrt.sh, and helper scripts
 /examples         - example configurations
 .github/          - CI, templates, issue infrastructure
 ```

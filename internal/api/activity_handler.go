@@ -6,17 +6,7 @@ import (
 	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
-type activityEntry struct {
-	ID             string  `json:"id"`
-	ClientIP       string  `json:"client_ip"`
-	Domain         string  `json:"domain"`
-	QueryType      string  `json:"query_type"`
-	Action         string  `json:"action"`
-	RuleID         *string `json:"rule_id"`
-	RuleSource     *string `json:"rule_source"`
-	ResponseTimeMs *int    `json:"response_time_ms"`
-	CreatedAt      string  `json:"created_at"`
-}
+type activityEntry = storage.ActivityEntryView
 
 func (h *Handler) ListActivity(w http.ResponseWriter, r *http.Request) {
 	limit := queryInt(r, "limit", 100)
@@ -39,6 +29,16 @@ func (h *Handler) ListActivity(w http.ResponseWriter, r *http.Request) {
 	if action != "" {
 		where += " AND action=?"
 		args = append(args, action)
+	}
+
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		items, total, err := bolt.ListActivity(limit, offset, clientIP, domain, action)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		respond(w, http.StatusOK, map[string]interface{}{"items": items, "total": total})
+		return
 	}
 
 	var total int
@@ -65,6 +65,26 @@ func (h *Handler) ListActivity(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ActivityStats(w http.ResponseWriter, r *http.Request) {
+	if bolt, ok := h.db.(*storage.BoltStore); ok {
+		total, blocked, allowed, err := bolt.ActivityCounts()
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		topBlocked, err := bolt.TopBlockedDomains(10)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		respond(w, http.StatusOK, map[string]interface{}{
+			"total":               total,
+			"blocked":             blocked,
+			"allowed":             allowed,
+			"top_blocked_domains": topBlocked,
+		})
+		return
+	}
+
 	var total, blocked, allowed int
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM activity_log").Scan(&total)
 	_ = h.db.QueryRow("SELECT COUNT(*) FROM activity_log WHERE action='blocked'").Scan(&blocked)

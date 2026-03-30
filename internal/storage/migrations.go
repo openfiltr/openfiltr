@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"database/sql"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -14,7 +13,7 @@ import (
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
-func Migrate(db *sql.DB) error {
+func Migrate(db Store) error {
 	if _, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version INTEGER PRIMARY KEY,

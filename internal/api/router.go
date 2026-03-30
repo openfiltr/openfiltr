@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,9 +8,10 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/openfiltr/openfiltr/internal/auth"
 	"github.com/openfiltr/openfiltr/internal/config"
+	"github.com/openfiltr/openfiltr/internal/storage"
 )
 
-func NewRouter(cfg *config.Config, db *sql.DB, version string) http.Handler {
+func NewRouter(cfg *config.Config, db storage.Store, version string) http.Handler {
 	r := chi.NewRouter()
 	authSvc := auth.NewService(db, cfg.Auth.JWTSecret, cfg.Auth.TokenExpiry)
 	h := &Handler{db: db, cfg: cfg, authSvc: authSvc, version: version}
