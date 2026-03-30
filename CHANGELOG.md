@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Added a repo-owned Linux systemd unit template at `deploy/systemd/openfiltr.service` and updated `scripts/install.sh` to render it with the chosen install and config paths instead of carrying an inline heredoc.
 - Added a storage interface seam across startup, API, DNS, and auth so the code no longer depends on concrete `*sql.DB` call sites for the bbolt migration work (#115).
 - Added an isolated bbolt bootstrap store with deterministic bucket initialisation, metadata versioning, and reopen tests in `internal/storage/bbolt_store.go` (#116).
 - Added `storage.database_path` plus startup backend selection so the server can boot against bbolt without requiring PostgreSQL at launch (#117).
