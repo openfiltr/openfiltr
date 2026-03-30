@@ -6,7 +6,7 @@ Complete these steps **before making any code changes**:
 
 2. **Read `CHANGELOG.md`** — understand what has recently changed and why. Pay particular attention to entries added after the most recent version tag; they describe in-progress or recently landed work that affects the current codebase state.
 
-3. **Read all ADRs in `docs/adr/`** — these record significant architectural decisions (e.g. "PostgreSQL only", "British English everywhere"). Do not reverse or work around a decision recorded in an ADR without first creating a new ADR that explicitly supersedes it.
+3. **Read all ADRs in `docs/adr/`** — these record significant architectural decisions (for example the storage decisions in ADR-0001 and ADR-0003, and the British English requirement). Do not reverse or work around a decision recorded in an ADR without first creating a new ADR that explicitly supersedes it.
 
 4. **Run the test suite** to establish the passing baseline before you write a single line of code:
    ```bash
@@ -33,7 +33,7 @@ OpenFiltr is a **self-hosted DNS filtering platform** built in Go. The repositor
 ### Key facts
 
 - **Language**: Go 1.24 backend
-- **Storage**: PostgreSQL only
+- **Storage**: bbolt by default, PostgreSQL optional
 - **DNS library**: `github.com/miekg/dns`
 - **HTTP router**: `github.com/go-chi/chi/v5`
 - **Authentication**: JWT (`github.com/golang-jwt/jwt/v5`) + bcrypt API tokens
@@ -52,10 +52,10 @@ internal/
   auth/              - JWT + bcrypt + API token logic
   config/            - YAML config loader
   dns/               - UDP DNS server + forwarding
-  storage/           - PostgreSQL open + migrations
+  storage/           - storage seam, bbolt store, PostgreSQL bootstrap + migrations
 openapi/             - OpenAPI 3.1 YAML spec
 deploy/docker/       - Dockerfile + docker-compose
-scripts/             - install.sh
+scripts/             - install scripts and release helpers
 .github/             - Workflows and templates
 ```
 
@@ -93,12 +93,14 @@ func (h *Handler) CreateBlockRule(w http.ResponseWriter, r *http.Request) {
 - All list endpoints return `{"items": [...], "total": N}`
 - All error responses return `{"error": {"message": "..."}}`
 
-### Database
+### Persistence
 
 - All IDs are UUIDs: `github.com/google/uuid`
-- PostgreSQL is the only supported database backend
-- Configuration uses `storage.database_url` or `OPENFILTR_DATABASE_URL`
-- Write SQL so it is valid for PostgreSQL. Use the existing storage helpers where needed
+- bbolt is the default embedded backend
+- PostgreSQL remains supported through `storage.database_url` or `OPENFILTR_DATABASE_URL`
+- Local embedded storage uses `storage.database_path` or `OPENFILTR_DATABASE_PATH`
+- New persistence work should consider both the bbolt and PostgreSQL paths unless the change is explicitly backend-specific
+- Write SQL so it remains valid for the PostgreSQL compatibility path. Use the existing storage helpers where needed
 - Always `defer rows.Close()` after a query
 - Wrap multi-step operations in a transaction
 
@@ -144,12 +146,13 @@ func (h *Handler) CreateBlockRule(w http.ResponseWriter, r *http.Request) {
 3. Add the OpenAPI path/schema to `openapi/openapi.yaml`
 4. Write a table-driven test in `internal/api/*_test.go`
 
-### Add a new database table
+### Add new persistent data
 
-1. Add the SQL migration under `internal/storage/migrations/`
-2. Add the model struct in the relevant package
-3. Implement CRUD functions
-4. Add CRUD API endpoints
+1. Add the view or model struct in the relevant package
+2. Update the bbolt store if the data belongs in the default backend
+3. Add or update SQL migrations if PostgreSQL compatibility needs the same data
+4. Implement CRUD functions without pushing raw SQL into handlers
+5. Add CRUD API endpoints if the data is part of the public surface
 
 ## Running locally
 
@@ -160,7 +163,7 @@ make build && ./openfiltr
 
 ## AI-specific notes
 
-- When generating SQL, follow the repository's PostgreSQL conventions and existing storage helpers
+- When generating SQL, follow the repository's PostgreSQL compatibility conventions and existing storage helpers
 - When generating new handlers, follow the existing `respond`/`respondError` pattern
 - When generating new list endpoints, return `{"items":[...], "total":N}`, not a raw array
 - When adding features, check the OpenAPI spec first to see if the endpoint is already documented

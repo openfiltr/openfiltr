@@ -27,12 +27,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Made bbolt the default runtime backend, resolved relative database paths against the config directory, and dropped the mandatory PostgreSQL startup dependency (#122).
 - Added an OpenWrt MT3000 deployment guide with `procd` service wiring and dnsmasq port guidance (#123).
 - CI now builds OpenWrt arm64 router archives, and tagged releases now publish `openfiltr-openwrt-arm64.tar.gz`, `openfiltr-openwrt-mt3000.tar.gz`, and `openfiltr-openwrt-mt6000.tar.gz` alongside the existing Docker image and desktop release assets.
+- ADRs, agent guidance, the roadmap, and the migration tracker now describe the current bbolt-first runtime truth instead of the superseded PostgreSQL-only position.
 - `AGENTS.md` and `.github/copilot-instructions/project.md` updated with a mandatory pre-task protocol: AI coding agents must sync with `main`, read `CHANGELOG.md`, read all ADRs, and run `go test ./...` before making any code changes.
 - Replaced SQLite storage with PostgreSQL-backed configuration and runtime support.
 
 ### Fixed
 
 - PR #93, merged on 2026-03-21, added exact, wildcard, apex-domain, and regex block rule matching in the DNS server, normalised queried domains for lookup, and documented the Codex branch and PR workflow so future agents follow the repository process.
+- PR #128, merged on 2026-03-30, fixed the changelog guard so pull request validation compares the base branch tree directly against `HEAD` instead of failing on shallow checkouts with no merge base.
 
 ## [0.1.0] — 2026-03-18
 

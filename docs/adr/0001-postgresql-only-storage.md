@@ -1,7 +1,7 @@
 # ADR-0001: PostgreSQL as the Only Supported Database Backend
 
 **Date:** 2026-03-18
-**Status:** Accepted
+**Status:** Superseded by ADR-0003
 
 ## Context
 
@@ -44,3 +44,4 @@ Schema is managed through versioned SQL migration files under `internal/storage/
 - PR implementing the change: merged 2026-03-18
 - `internal/storage/migrations/001_initial_schema.sql` — PostgreSQL-native initial schema
 - `deploy/docker/docker-compose.yml` — reference Compose file with PostgreSQL service
+- Superseded by [ADR-0003](0003-bbolt-default-storage.md)

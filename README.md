@@ -104,13 +104,15 @@ For a router-specific deployment guide, manual fallback steps, and override flag
 | Feature | v1.0 | v1.1 | v1.2 |
 |---|---|---|---|
 | DNS forwarding | ✅ | | |
-| Block & allow rules | ✅ | | |
+| Block rules (exact, wildcard, regex) | ✅ | | |
+| Allow-rule precedence | | planned | |
 | Rule sources (hosts, domain lists) | ✅ | | |
-| Local DNS entries | ✅ | | |
-| Per-client / per-group policies | ✅ | | |
+| Local DNS entries (A, AAAA, CNAME) | ✅ | | |
+| Per-client / per-group policies | | planned | |
 | REST API + OpenAPI docs | ✅ | | |
 | YAML import & export | ✅ | | |
 | Docker & curl install | ✅ | | |
+| Embedded bbolt persistence | ✅ | | |
 | PostgreSQL persistence | ✅ | | |
 | Auth with local users + API tokens | ✅ | | |
 | Activity log & audit trail | ✅ | | |
@@ -122,7 +124,6 @@ For a router-specific deployment guide, manual fallback steps, and override flag
 | Prometheus metrics | | ✅ | |
 | Role-based access control | | ✅ | |
 | Plugin system | | | ✅ |
-| PostgreSQL | | | ✅ |
 | SSO | | | ✅ |
 
 ## API
@@ -173,7 +174,7 @@ Export your configuration at any time:
 curl -H "Authorization: Bearer <token>" http://localhost:3000/api/v1/config/export > config-backup.yaml
 ```
 
-Exported backups start with a schema version header so imports can reject incompatible files clearly:
+Exported backups and config bundles start with a schema version header so imports can reject incompatible files clearly:
 
 ```yaml
 version: 1
