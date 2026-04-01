@@ -1,35 +1,47 @@
-# OpenFiltr API Authentication Guide
+# API Authentication Guide
 
-This guide explains how to authenticate with the OpenFiltr API using both JWT tokens and API tokens.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Initial Setup](#initial-setup)
-- [JWT Authentication](#jwt-authentication)
-- [API Token Authentication](#api-token-authentication)
-- [Cookie-Based Authentication](#cookie-based-authentication)
-- [When to Use JWT vs API Tokens](#when-to-use-jwt-vs-api-tokens)
-- [Token Revocation](#token-revocation)
-- [Security Best Practices](#security-best-practices)
+This guide explains how to authenticate with the OpenFiltr API using both JWT tokens and long-lived API tokens.
 
 ## Overview
 
 OpenFiltr supports two primary authentication methods:
 
-1. **JWT (JSON Web Tokens)** - For browser-based sessions and temporary access
-2. **API Tokens** - For programmatic access, automation, and long-term integrations
+| Method | Use Case | Lifetime |
+|--------|----------|----------|
+| **JWT Token** | Browser sessions, short-lived automation | Hours (configurable) |
+| **API Token** | Scripts, CI/CD, integrations | Days to years (configurable) |
 
-Both methods use the `Authorization` header with the `Bearer` scheme, or can be passed via HTTP cookies for browser sessions.
+All authenticated endpoints require a bearer token in the `Authorization` header:
 
-## Initial Setup
+```http
+Authorization: Bearer <token>
+```
 
-Before you can authenticate, you must create the initial admin user:
+---
 
-### Create Admin User
+## Quick Start
+
+### First-Time Setup
+
+Before you can authenticate, you need to create the initial admin user:
 
 ```bash
-curl -X POST https://your-openfiltr-instance/api/v1/auth/setup \
+curl -X POST http://localhost:3000/api/v1/auth/setup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "your-secure-password"
+  }'
+```
+
+**Response:** `201 Created`
+
+> **Note:** The setup endpoint returns `409 Conflict` if a user already exists.
+
+### Login to Get a JWT
+
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
@@ -38,30 +50,7 @@ curl -X POST https://your-openfiltr-instance/api/v1/auth/setup \
 ```
 
 **Response:**
-```json
-{
-  "message": "setup complete"
-}
-```
 
-**Note:** This endpoint is only available when no users exist in the system. Once a user is created, this endpoint returns a 409 Conflict error.
-
-## JWT Authentication
-
-JWT tokens are ideal for browser sessions and short-lived access. They contain encoded user information and have an expiration time configured by the server.
-
-### Login to Get JWT Token
-
-```bash
-curl -X POST https://your-openfiltr-instance/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "password": "your-secure-password"
-  }'
-```
-
-**Response:**
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -70,440 +59,423 @@ curl -X POST https://your-openfiltr-instance/api/v1/auth/login \
 }
 ```
 
-The response includes:
-- `token` - The JWT token to use for authentication
-- `username` - The authenticated username
-- `role` - The user's role (typically "admin")
-
-### Using JWT Token
-
-**Option 1: Authorization Header (Recommended for API clients)**
+Use the token in subsequent requests:
 
 ```bash
-curl -X GET https://your-openfiltr-instance/api/v1/auth/me \
+curl http://localhost:3000/api/v1/filtering/block-rules \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
-**Option 2: Cookie (For browser sessions)**
+---
 
-The login endpoint automatically sets an HTTP-only cookie named `openfiltr_token`. Browsers will include this cookie automatically in subsequent requests.
+## Authentication Methods
+
+### 1. JWT Token (Browser Sessions)
+
+JWT tokens are designed for browser-based sessions and short-lived automation tasks.
+
+#### How It Works
+
+1. **Login:** Send credentials to `/api/v1/auth/login`
+2. **Receive Token:** Get a JWT token in the response body
+3. **Use Token:** Include it in the `Authorization: Bearer` header
+
+JWT tokens have a configurable expiry time (default: 24 hours).
+
+#### Login Example
 
 ```bash
-# Using cookie jar for session management
-curl -X POST https://your-openfiltr-instance/api/v1/auth/login \
+# Login and extract the token
+TOKEN=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"your-secure-password"}' \
-  -c cookies.txt
+  -d '{"username": "admin", "password": "your-password"}' \
+  | jq -r '.token')
 
-# Subsequent requests use the cookie
-curl -X GET https://your-openfiltr-instance/api/v1/auth/me \
-  -b cookies.txt
+# Use the token for subsequent requests
+curl http://localhost:3000/api/v1/filtering/block-rules \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-### Get Current User Info
+#### Logout
 
 ```bash
-curl -X GET https://your-openfiltr-instance/api/v1/auth/me \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+curl -X POST http://localhost:3000/api/v1/auth/logout \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-**Response:**
-```json
-{
-  "id": "uuid-here",
-  "username": "admin",
-  "role": "admin"
-}
+#### When to Use JWT Tokens
+
+- **Browser applications** with user login flows
+- **Short-lived scripts** that run on-demand
+- **Interactive sessions** where you want automatic expiration
+
+---
+
+### 2. Cookie-Based Authentication (Browser Sessions)
+
+For browser applications, OpenFiltr also supports cookie-based authentication with CSRF protection.
+
+#### How It Works
+
+1. **Login:** The server sets an `openfiltr_token` HttpOnly cookie
+2. **CSRF Protection:** The response includes an `X-CSRF-Token` header and `openfiltr_csrf` cookie
+3. **State-Changing Requests:** Include the CSRF token in the `X-CSRF-Token` header
+
+#### Example (Browser)
+
+```javascript
+// Login
+const response = await fetch('/api/v1/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'admin', password: 'your-password' })
+});
+
+// Extract CSRF token from response header
+const csrfToken = response.headers.get('X-CSRF-Token');
+
+// Use CSRF token for state-changing requests
+await fetch('/api/v1/filtering/block-rules', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': csrfToken
+  },
+  body: JSON.stringify({ pattern: 'ads.example.com', rule_type: 'wildcard' })
+});
 ```
 
-### Logout
+> **Important:** The CSRF token is required for all state-changing requests (POST, PUT, PATCH, DELETE) when using cookie-based authentication.
+
+---
+
+### 3. API Token (Long-Lived)
+
+API tokens are designed for automation, scripts, CI/CD pipelines, and integrations.
+
+#### Key Features
+
+- Prefix: `oft_` (e.g., `oft_a1b2c3d4e5f6...`)
+- Configurable expiry (days to years, or no expiry)
+- Stored securely — shown only once at creation
+- Can be revoked at any time
+
+#### Create an API Token
 
 ```bash
-curl -X POST https://your-openfiltr-instance/api/v1/auth/logout \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
+# First, get a JWT token via login
+JWT_TOKEN=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "your-password"}' \
+  | jq -r '.token')
 
-This clears the authentication cookie and invalidates the session on the client side.
-
-## API Token Authentication
-
-API tokens are designed for automation, scripts, and long-term integrations. They are more suitable for server-to-server communication and don't require re-authentication.
-
-### Create an API Token
-
-```bash
-curl -X POST https://your-openfiltr-instance/api/v1/auth/tokens \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+# Create an API token
+curl -X POST http://localhost:3000/api/v1/auth/tokens \
+  -H "Authorization: Bearer $JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "automation-script",
-    "expires_at": "2026-12-31T23:59:59Z"
+    "name": "CI Deployment Token",
+    "expires_at": "2027-01-01T00:00:00Z"
   }'
 ```
 
-**Parameters:**
-- `name` (required) - A descriptive name for the token
-- `expires_at` (optional) - Expiration time in RFC3339 format
-
 **Response:**
+
 ```json
 {
-  "id": "uuid-here",
-  "name": "automation-script",
-  "token": "oft_1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "CI Deployment Token",
+  "token": "oft_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+  "created_at": "2026-04-01T12:00:00Z",
+  "expires_at": "2027-01-01T00:00:00Z"
 }
 ```
 
-**Important:** The `token` value is only shown once. Store it securely as it cannot be retrieved again.
+> **Warning:** The `token` field is returned **only once**. Store it securely immediately.
 
-### List API Tokens
+#### Use an API Token
 
 ```bash
-curl -X GET https://your-openfiltr-instance/api/v1/auth/tokens \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+# Use the API token directly
+API_TOKEN="oft_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+
+curl http://localhost:3000/api/v1/filtering/block-rules \
+  -H "Authorization: Bearer $API_TOKEN"
+```
+
+#### List Your API Tokens
+
+```bash
+curl http://localhost:3000/api/v1/auth/tokens \
+  -H "Authorization: Bearer $JWT_TOKEN"
 ```
 
 **Response:**
+
 ```json
 {
   "items": [
     {
-      "id": "uuid-here",
-      "name": "automation-script",
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "CI Deployment Token",
       "scopes": "",
       "last_used_at": "2026-04-01T10:30:00Z",
-      "expires_at": "2026-12-31T23:59:59Z",
-      "created_at": "2026-04-01T10:00:00Z"
+      "expires_at": "2027-01-01T00:00:00Z",
+      "created_at": "2026-04-01T12:00:00Z"
     }
   ],
   "total": 1
 }
 ```
 
-### Using API Token
+> **Note:** Raw token values are never returned after creation. You only see metadata.
+
+#### Revoke an API Token
 
 ```bash
-curl -X GET https://your-openfiltr-instance/api/v1/system/status \
-  -H "Authorization: Bearer oft_YOUR_API_TOKEN"
-```
-
-API tokens use the same `Authorization: Bearer` header as JWT tokens. The server automatically detects which type of token is being used.
-
-### Example: Using API Token in a Script
-
-```bash
-#!/bin/bash
-API_TOKEN="oft_1234567890abcdef..."
-
-# Get system status
-curl -X GET https://your-openfiltr-instance/api/v1/system/status \
-  -H "Authorization: Bearer $API_TOKEN"
-
-# Create a block rule
-curl -X POST https://your-openfiltr-instance/api/v1/filtering/block-rules \
-  -H "Authorization: Bearer $API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pattern": "ads.example.com",
-    "enabled": true
-  }'
-```
-
-## Cookie-Based Authentication
-
-For browser-based sessions, OpenFiltr uses cookies with CSRF protection for enhanced security.
-
-### How It Works
-
-1. **Login**: The `/api/v1/auth/login` endpoint sets two cookies:
-   - `openfiltr_token` - HTTP-only cookie containing the JWT token
-   - CSRF token cookie
-
-2. **CSRF Protection**: For state-changing operations (POST, PUT, DELETE), include the CSRF token in:
-   - `X-CSRF-Token` header
-   - Or `X-CSRF-Token` cookie
-
-### Browser Example
-
-```javascript
-// Login
-const response = await fetch('/api/v1/auth/login', {
-  method: 'POST',
-  headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({username: 'admin', password: 'your-password'}),
-  credentials: 'include' // Important: include cookies
-});
-
-const data = await response.json();
-const csrfToken = response.headers.get('X-CSRF-Token');
-
-// Subsequent requests with CSRF protection
-const protectedResponse = await fetch('/api/v1/filtering/block-rules', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-Token': csrfToken
-  },
-  credentials: 'include',
-  body: JSON.stringify({pattern: 'ads.example.com', enabled: true})
-});
-```
-
-### Curl Example with Cookies
-
-```bash
-# Login and save cookies
-curl -X POST https://your-openfiltr-instance/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"your-password"}' \
-  -c cookies.txt \
-  -D headers.txt
-
-# Extract CSRF token from response headers
-CSRF_TOKEN=$(grep -i 'X-CSRF-Token' headers.txt | cut -d' ' -f2 | tr -d '\r')
-
-# Make protected request with CSRF token
-curl -X POST https://your-openfiltr-instance/api/v1/filtering/block-rules \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: $CSRF_TOKEN" \
-  -b cookies.txt \
-  -d '{"pattern":"ads.example.com","enabled":true}'
-```
-
-## When to Use JWT vs API Tokens
-
-### Use JWT Tokens When:
-- **Browser-based sessions** - Users log in through a web interface
-- **Short-lived access** - Token expiration is desirable
-- **User context required** - You need user identity in each request
-- **Interactive workflows** - Users actively interact with the application
-
-**Advantages:**
-- Automatic expiration for security
-- User context embedded in token
-- Compatible with browser cookie storage
-
-**Limitations:**
-- Requires periodic re-authentication
-- Not ideal for long-running automation
-
-### Use API Tokens When:
-- **Automation and scripts** - CI/CD pipelines, scheduled jobs
-- **Server-to-server communication** - Microservices or integrations
-- **Long-term integrations** - Third-party tools that need persistent access
-- **API clients** - Mobile apps, desktop applications, CLI tools
-
-**Advantages:**
-- No expiration (or custom expiration)
-- Can be revoked without affecting user password
-- Easier to manage for multiple integrations
-- Token visible only once during creation (more secure)
-
-**Limitations:**
-- Must be stored securely
-- No automatic expiration (unless configured)
-- Requires manual rotation for security
-
-### Decision Matrix
-
-| Use Case | Recommended Method |
-|----------|-------------------|
-| Web UI login | JWT with cookie |
-| Mobile app | API Token |
-| CI/CD pipeline | API Token |
-| Scheduled scripts | API Token |
-| Third-party integration | API Token |
-| Temporary access | JWT |
-| Long-running service | API Token |
-
-## Token Revocation
-
-### Revoke API Tokens
-
-You can revoke (delete) API tokens that are no longer needed:
-
-```bash
-curl -X DELETE https://your-openfiltr-instance/api/v1/auth/tokens/{token_id} \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-**Response:**
-```json
-{
-  "message": "deleted"
-}
-```
-
-**Note:** You need the token `id` (not the token value) to delete it. Use the `GET /api/v1/auth/tokens` endpoint to list tokens and get their IDs.
-
-### JWT Logout
-
-While JWT tokens have expiration, you can explicitly logout:
-
-```bash
-curl -X POST https://your-openfiltr-instance/api/v1/auth/logout \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-This clears the session cookie. Note that JWT tokens are stateless and cannot be truly revoked server-side until they expire.
-
-### Security Implications
-
-- **API Tokens**: Immediately revoked upon deletion
-- **JWT Tokens**: Cannot be revoked server-side until expiration (configured by `AUTH_TOKEN_EXPIRY` environment variable)
-- **Best Practice**: Use short expiration times for JWT and longer expiration (or no expiration) for API tokens with manual rotation
-
-## Security Best Practices
-
-### 1. Token Storage
-
-- **JWT in browsers**: Use HTTP-only cookies to prevent XSS attacks
-- **API Tokens**: Store in environment variables or secure secret management systems
-- **Never**: Store tokens in code repositories, logs, or client-side localStorage
-
-### 2. Token Rotation
-
-```bash
-# 1. Create new API token
-NEW_TOKEN=$(curl -s -X POST https://your-openfiltr-instance/api/v1/auth/tokens \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"new-automation-token"}' | jq -r '.token')
-
-# 2. Update your application to use the new token
-export OPENFILTR_API_TOKEN="$NEW_TOKEN"
-
-# 3. Revoke the old token
-curl -X DELETE https://your-openfiltr-instance/api/v1/auth/tokens/$OLD_TOKEN_ID \
+curl -X DELETE http://localhost:3000/api/v1/auth/tokens/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer $JWT_TOKEN"
 ```
 
-### 3. Scope Management
+**Response:** `200 OK`
 
-- Create separate API tokens for different purposes (e.g., monitoring, automation, reporting)
-- Name tokens descriptively to track usage
-- Set expiration dates for temporary integrations
-- Regularly audit token usage via the list endpoint
+#### When to Use API Tokens
 
-### 4. Network Security
+- **CI/CD pipelines** for automated deployments
+- **Monitoring scripts** that run periodically
+- **Integrations** with other tools or services
+- **Long-running services** that need persistent authentication
+- **Service-to-service** communication
 
-- Always use HTTPS in production
-- Use secure cookie flags (`Secure`, `HttpOnly`, `SameSite=Strict`)
-- Consider IP whitelisting for API token usage
-- Monitor authentication logs for suspicious activity
+---
 
-### 5. Password Requirements
+## JWT vs API Tokens: When to Use Which?
 
-- Minimum 8 characters (enforced by the API)
-- Use strong, unique passwords for admin accounts
-- Consider implementing password rotation policies
+| Scenario | Recommended Method |
+|----------|-------------------|
+| User login in a web app | JWT with cookie + CSRF |
+| Short automation script | JWT token |
+| CI/CD pipeline | API token |
+| Scheduled monitoring job | API token |
+| Interactive API exploration | JWT token |
+| Production integration | API token |
+| Mobile/desktop app | API token |
 
-### 6. Monitoring and Auditing
+### JWT Tokens
 
-- Use the `/api/v1/auth/tokens` endpoint to audit active tokens
-- Check the `last_used_at` timestamp to identify unused tokens
-- Monitor the audit log endpoint for authentication events:
-  ```bash
-  curl -X GET https://your-openfiltr-instance/api/v1/audit \
-    -H "Authorization: Bearer YOUR_JWT_TOKEN"
-  ```
+✅ **Advantages:**
+- Auto-expire for security
+- Can be obtained via login flow
+- Works well with browser sessions
 
-## Common Patterns
+❌ **Disadvantages:**
+- Need to refresh periodically
+- Tied to user session
 
-### CI/CD Pipeline Integration
+### API Tokens
 
-```yaml
-# GitHub Actions example
-name: Update Block Rules
-on:
-  schedule:
-    - cron: '0 0 * * *'
+✅ **Advantages:**
+- Long-lived (days, months, years)
+- Can be scoped and named
+- Easy to rotate or revoke
+- No session dependency
 
-jobs:
-  update-rules:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch block list
-        run: |
-          curl -X POST https://openfiltr.example.com/api/v1/filtering/sources/{id}/refresh \
-            -H "Authorization: Bearer ${{ secrets.OPENFILTR_API_TOKEN }}"
+❌ **Disadvantages:**
+- Must be stored securely
+- Only shown once at creation
+- No auto-expiry (unless configured)
+
+---
+
+## Security Best Practices
+
+### 1. Store Tokens Securely
+
+```bash
+# Good: Use environment variables
+export OPENFILTR_API_TOKEN="oft_..."
+curl -H "Authorization: Bearer $OPENFILTR_API_TOKEN" ...
+
+# Bad: Hardcode in scripts
+curl -H "Authorization: Bearer oft_a1b2c3..." ...
 ```
 
-### Monitoring Script
+### 2. Use HTTPS in Production
+
+```bash
+# Production
+curl https://api.yourdomain.com/api/v1/auth/login ...
+
+# Development only
+curl http://localhost:3000/api/v1/auth/login ...
+```
+
+### 3. Set Token Expiry
+
+```bash
+# Set a reasonable expiry for API tokens (e.g., 1 year)
+curl -X POST http://localhost:3000/api/v1/auth/tokens \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production API Token",
+    "expires_at": "2027-04-01T00:00:00Z"
+  }'
+```
+
+### 4. Rotate Tokens Regularly
+
+1. Create a new API token
+2. Update your scripts/services with the new token
+3. Revoke the old token
+
+### 5. Revoke Compromised Tokens Immediately
+
+```bash
+# List tokens to find the one to revoke
+curl http://localhost:3000/api/v1/auth/tokens \
+  -H "Authorization: Bearer $JWT_TOKEN"
+
+# Revoke immediately
+curl -X DELETE http://localhost:3000/api/v1/auth/tokens/<token-id> \
+  -H "Authorization: Bearer $JWT_TOKEN"
+```
+
+### 6. Use Strong Passwords
+
+For the initial admin user and any additional users, use strong, unique passwords:
+
+```bash
+# Generate a secure password
+openssl rand -base64 24
+```
+
+---
+
+## Example Workflows
+
+### CI/CD Pipeline Example
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy Block Rules
+
+on:
+  push:
+    paths:
+      - 'block-rules.yaml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy rules to OpenFiltr
+        env:
+          OPENFILTR_API_URL: https://dns.yourdomain.com
+          OPENFILTR_API_TOKEN: ${{ secrets.OPENFILTR_API_TOKEN }}
+        run: |
+          # Read rules from file
+          RULES=$(cat block-rules.yaml)
+
+          # Apply rules via API
+          curl -X POST "$OPENFILTR_API_URL/api/v1/filtering/block-rules" \
+            -H "Authorization: Bearer $OPENFILTR_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$RULES"
+```
+
+### Monitoring Script Example
 
 ```bash
 #!/bin/bash
-# Health check with API token
-API_TOKEN="oft_your_token_here"
+# monitor-dns.sh
 
-response=$(curl -s -w "%{http_code}" \
-  -X GET https://openfiltr.example.com/api/v1/system/status \
-  -H "Authorization: Bearer $API_TOKEN")
+API_URL="https://dns.yourdomain.com"
+API_TOKEN="${OPENFILTR_API_TOKEN:?Set OPENFILTR_API_TOKEN environment variable}"
 
-http_code="${response: -3}"
-body="${response%???}"
+# Get current block rules count
+COUNT=$(curl -s "$API_URL/api/v1/filtering/block-rules" \
+  -H "Authorization: Bearer $API_TOKEN" \
+  | jq '.total')
 
-if [ "$http_code" -eq 200 ]; then
-  echo "OpenFiltr is healthy"
-  echo "$body" | jq .
-else
-  echo "OpenFiltr health check failed: $http_code"
-  exit 1
-fi
+echo "Current block rules: $COUNT"
+
+# Check system health
+HEALTH=$(curl -s "$API_URL/api/v1/system/health")
+echo "System health: $HEALTH"
 ```
+
+---
 
 ## Troubleshooting
 
-### Invalid Credentials (401)
+### Invalid Credentials
 
-```bash
-# Check your credentials
-curl -X POST https://your-openfiltr-instance/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"wrong-password"}'
-
-# Response: {"error":{"message":"invalid credentials"}}
+```json
+{
+  "error": {
+    "message": "invalid credentials"
+  }
+}
 ```
 
-**Solutions:**
-- Verify username and password
-- Ensure user exists (run setup if needed)
-- Check for typos in credentials
+**Solution:** Check your username and password. Ensure the user exists.
 
 ### Token Expired
 
-JWT tokens have an expiration time. If you receive 401 errors after some time:
-
-```bash
-# Re-login to get a new JWT
-curl -X POST https://your-openfiltr-instance/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"your-password"}'
+```json
+{
+  "error": {
+    "message": "token is expired"
+  }
+}
 ```
 
-### CSRF Token Missing
+**Solution:** Login again to get a new JWT token, or use an API token.
 
-For browser sessions making POST/PUT/DELETE requests:
+### Invalid Token
 
-```bash
-# Ensure CSRF token is included in headers
-curl -X POST https://your-openfiltr-instance/api/v1/filtering/block-rules \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: YOUR_CSRF_TOKEN" \
-  -b cookies.txt \
-  -d '{"pattern":"ads.example.com","enabled":true}'
+```json
+{
+  "error": {
+    "message": "invalid token"
+  }
+}
 ```
 
-### API Token Not Found (404)
+**Solution:** Ensure the token is correctly formatted in the `Authorization: Bearer <token>` header.
 
-```bash
-# Verify token exists in your token list
-curl -X GET https://your-openfiltr-instance/api/v1/auth/tokens \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+### CSRF Token Required
+
+```json
+{
+  "error": {
+    "message": "CSRF token required"
+  }
+}
 ```
 
-## Additional Resources
+**Solution:** When using cookie-based authentication, include the `X-CSRF-Token` header with the value from the login response.
 
-- [OpenAPI Specification](/openapi.yaml) - Full API documentation
-- [Contributing Guide](../CONTRIBUTING.md) - How to contribute to OpenFiltr
-- [Security Policy](../SECURITY.md) - Reporting security vulnerabilities
+---
+
+## API Reference Summary
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/setup` | POST | Create initial admin user |
+| `/api/v1/auth/login` | POST | Login to get JWT token |
+| `/api/v1/auth/logout` | POST | Logout and clear session |
+| `/api/v1/auth/me` | GET | Get current user info |
+| `/api/v1/auth/tokens` | GET | List API tokens |
+| `/api/v1/auth/tokens` | POST | Create new API token |
+| `/api/v1/auth/tokens/{id}` | DELETE | Revoke an API token |
+
+---
+
+## Next Steps
+
+- [OpenAPI Specification](../openapi/openapi.yaml) — Full API specification
+- [README](../README.md) — Project overview and installation guide
