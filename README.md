@@ -37,6 +37,8 @@ Existing DNS filtering tools prioritise simplicity over extensibility. OpenFiltr
 
 ## Quick install
 
+> **📖 For detailed installation instructions, prerequisites, and troubleshooting, see the [Installation Guide](docs/installation.md).**
+
 ### curl (Linux / macOS)
 
 ```bash
